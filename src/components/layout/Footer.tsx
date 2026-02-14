@@ -3,7 +3,7 @@ import { Shield } from "lucide-react";
 
 export function Footer() {
   return (
-    <footer className="bg-dark-900 text-dark-300" role="contentinfo">
+    <footer className="bg-dark-900 text-dark-300 dark:bg-dark-900 dark:border-t dark:border-dark-800" role="contentinfo">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
@@ -100,4 +100,3 @@ export function Footer() {
     </footer>
   );
 }
-

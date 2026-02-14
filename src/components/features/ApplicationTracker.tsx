@@ -63,7 +63,7 @@ export function ApplicationTracker({ applications, onDelete }: ApplicationTracke
             className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all cursor-pointer ${
               filter === tab
                 ? "bg-primary-500 text-white shadow-md"
-                : "bg-dark-100 text-dark-600 hover:bg-dark-200"
+                : "bg-dark-100 dark:bg-dark-700 text-dark-600 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-600"
             }`}
           >
             {tab.charAt(0).toUpperCase() + tab.slice(1)}
@@ -78,7 +78,7 @@ export function ApplicationTracker({ applications, onDelete }: ApplicationTracke
 
       {/* Timeline */}
       <div className="relative">
-        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-dark-200" />
+        <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-dark-200 dark:bg-dark-700" />
 
         <div className="space-y-6">
           {filtered.map((app, index) => {
@@ -96,7 +96,7 @@ export function ApplicationTracker({ applications, onDelete }: ApplicationTracke
               >
                 {/* Timeline dot */}
                 <div
-                  className={`absolute left-4 top-6 w-5 h-5 rounded-full border-2 border-white shadow-md flex items-center justify-center ${
+                  className={`absolute left-4 top-6 w-5 h-5 rounded-full border-2 border-white dark:border-dark-800 shadow-md flex items-center justify-center ${
                     app.status === "successful"
                       ? "bg-success-500"
                       : app.status === "rejected"
@@ -109,11 +109,11 @@ export function ApplicationTracker({ applications, onDelete }: ApplicationTracke
                   <div className="w-2 h-2 rounded-full bg-white" />
                 </div>
 
-                <div className="bg-white rounded-xl border border-dark-200 p-5 hover:shadow-md transition-shadow">
+                <div className="bg-white dark:bg-dark-800 rounded-xl border border-dark-200 dark:border-dark-700 p-5 hover:shadow-md dark:hover:shadow-primary-900/10 transition-shadow">
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-dark-900 mb-1">{app.property_address}</h3>
-                      <div className="flex items-center gap-3 text-sm text-dark-500">
+                      <h3 className="font-semibold text-dark-900 dark:text-dark-100 mb-1">{app.property_address}</h3>
+                      <div className="flex items-center gap-3 text-sm text-dark-500 dark:text-dark-400">
                         <span>{formatCurrency(app.rent_amount)}/week</span>
                         <span>·</span>
                         <span>{app.bedrooms} bed</span>
@@ -129,17 +129,17 @@ export function ApplicationTracker({ applications, onDelete }: ApplicationTracke
                       <div className="relative">
                         <button
                           onClick={() => setOpenMenu(openMenu === app.id ? null : app.id)}
-                          className="p-1 rounded-lg hover:bg-dark-100 transition-colors"
+                          className="p-1 rounded-lg hover:bg-dark-100 dark:hover:bg-dark-700 transition-colors"
                         >
-                          <MoreVertical className="w-4 h-4 text-dark-400" />
+                          <MoreVertical className="w-4 h-4 text-dark-400 dark:text-dark-500" />
                         </button>
                         {openMenu === app.id && (
                           <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
-                            className="absolute right-0 top-8 w-40 bg-white rounded-xl border border-dark-200 shadow-xl z-10 py-1"
+                            className="absolute right-0 top-8 w-40 bg-white dark:bg-dark-700 rounded-xl border border-dark-200 dark:border-dark-600 shadow-xl z-10 py-1"
                           >
-                            <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-dark-600 hover:bg-dark-50">
+                            <button className="flex items-center gap-2 w-full px-4 py-2 text-sm text-dark-600 dark:text-dark-200 hover:bg-dark-50 dark:hover:bg-dark-600">
                               <Eye className="w-4 h-4" />
                               View Details
                             </button>
@@ -148,7 +148,7 @@ export function ApplicationTracker({ applications, onDelete }: ApplicationTracke
                                 onDelete?.(app.id);
                                 setOpenMenu(null);
                               }}
-                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-danger-500 hover:bg-danger-50"
+                              className="flex items-center gap-2 w-full px-4 py-2 text-sm text-danger-500 hover:bg-danger-50 dark:hover:bg-danger-900/20"
                             >
                               <Trash2 className="w-4 h-4" />
                               Delete
@@ -171,7 +171,7 @@ export function ApplicationTracker({ applications, onDelete }: ApplicationTracke
                                 : app.status === "successful" && i === statusSteps.length - 1
                                 ? "bg-success-500"
                                 : "bg-primary-500"
-                              : "bg-dark-200"
+                              : "bg-dark-200 dark:bg-dark-700"
                           }`}
                         />
                       </div>
@@ -182,7 +182,7 @@ export function ApplicationTracker({ applications, onDelete }: ApplicationTracke
                       <span
                         key={step}
                         className={`text-[10px] ${
-                          i <= stepIndex ? "text-dark-600 font-medium" : "text-dark-300"
+                          i <= stepIndex ? "text-dark-600 dark:text-dark-300 font-medium" : "text-dark-300 dark:text-dark-600"
                         }`}
                       >
                         {step}

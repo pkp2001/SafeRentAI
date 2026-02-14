@@ -16,6 +16,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
+import { ThemeToggle } from "@/components/shared/ThemeToggle";
 
 const navLinks = [
   { path: "/", label: "Home", icon: Shield },
@@ -39,7 +40,7 @@ export function Navbar() {
 
   return (
     <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-dark-200/50" aria-label="Main navigation">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-lg border-b border-dark-200/50 dark:bg-dark-900/80 dark:border-dark-700/50 transition-colors" aria-label="Main navigation">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
@@ -47,7 +48,7 @@ export function Navbar() {
               <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 flex items-center justify-center shadow-md shadow-primary-500/20 group-hover:shadow-lg group-hover:shadow-primary-500/30 transition-shadow">
                 <Shield className="w-5 h-5 text-white" />
               </div>
-              <span className="text-lg font-bold text-dark-900">
+              <span className="text-lg font-bold text-dark-900 dark:text-white">
                 SafeRent<span className="text-primary-500">AI</span>
               </span>
             </Link>
@@ -60,8 +61,8 @@ export function Navbar() {
                   to={link.path}
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-200 ${
                     isActive(link.path)
-                      ? "bg-primary-50 text-primary-600"
-                      : "text-dark-600 hover:text-dark-900 hover:bg-dark-50"
+                      ? "bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
+                      : "text-dark-600 hover:text-dark-900 hover:bg-dark-50 dark:text-dark-400 dark:hover:text-dark-200 dark:hover:bg-dark-800"
                   }`}
                   aria-current={isActive(link.path) ? "page" : undefined}
                 >
@@ -72,6 +73,7 @@ export function Navbar() {
 
             {/* Right side */}
             <div className="hidden md:flex items-center gap-3">
+              <ThemeToggle />
               {user ? (
                 <div className="flex items-center gap-3">
                   <Link to="/profile" aria-label="View profile">
@@ -98,14 +100,17 @@ export function Navbar() {
             </div>
 
             {/* Mobile menu button */}
-            <button
-              className="md:hidden p-2 rounded-xl hover:bg-dark-100 transition-colors"
-              onClick={() => setMobileOpen(!mobileOpen)}
-              aria-label={mobileOpen ? "Close menu" : "Open menu"}
-              aria-expanded={mobileOpen}
-            >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
+            <div className="md:hidden flex items-center gap-2">
+              <ThemeToggle />
+              <button
+                className="p-2 rounded-xl hover:bg-dark-100 dark:hover:bg-dark-700 transition-colors"
+                onClick={() => setMobileOpen(!mobileOpen)}
+                aria-label={mobileOpen ? "Close menu" : "Open menu"}
+                aria-expanded={mobileOpen}
+              >
+                {mobileOpen ? <X className="w-5 h-5 dark:text-dark-200" /> : <Menu className="w-5 h-5 dark:text-dark-200" />}
+              </button>
+            </div>
           </div>
         </div>
       </nav>
@@ -127,16 +132,16 @@ export function Navbar() {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 bottom-0 z-50 w-72 bg-white shadow-2xl md:hidden"
+              className="fixed right-0 top-0 bottom-0 z-50 w-72 bg-white dark:bg-dark-800 shadow-2xl md:hidden"
             >
-              <div className="flex items-center justify-between p-4 border-b border-dark-200">
-                <span className="font-bold text-lg">Menu</span>
+              <div className="flex items-center justify-between p-4 border-b border-dark-200 dark:border-dark-700">
+                <span className="font-bold text-lg dark:text-white">Menu</span>
                 <button
-                  className="p-2 rounded-xl hover:bg-dark-100"
+                  className="p-2 rounded-xl hover:bg-dark-100 dark:hover:bg-dark-700"
                   onClick={() => setMobileOpen(false)}
                   aria-label="Close menu"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-5 h-5 dark:text-dark-200" />
                 </button>
               </div>
               <div className="p-4 space-y-1">
@@ -149,8 +154,8 @@ export function Navbar() {
                       onClick={() => setMobileOpen(false)}
                       className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                         isActive(link.path)
-                          ? "bg-primary-50 text-primary-600"
-                          : "text-dark-600 hover:bg-dark-50"
+                          ? "bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
+                          : "text-dark-600 hover:bg-dark-50 dark:text-dark-400 dark:hover:bg-dark-700"
                       }`}
                       aria-current={isActive(link.path) ? "page" : undefined}
                     >
@@ -169,8 +174,8 @@ export function Navbar() {
                         onClick={() => setMobileOpen(false)}
                         className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all ${
                           isActive(link.path)
-                            ? "bg-primary-50 text-primary-600"
-                            : "text-dark-600 hover:bg-dark-50"
+                            ? "bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
+                            : "text-dark-600 hover:bg-dark-50 dark:text-dark-400 dark:hover:bg-dark-700"
                         }`}
                         aria-current={isActive(link.path) ? "page" : undefined}
                       >
@@ -180,7 +185,7 @@ export function Navbar() {
                     );
                   })}
               </div>
-              <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-dark-200">
+              <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-dark-200 dark:border-dark-700">
                 {user ? (
                   <Button variant="outline" className="w-full" onClick={signOut}>
                     <LogOut className="w-4 h-4 mr-2" />
@@ -208,4 +213,3 @@ export function Navbar() {
     </>
   );
 }
-

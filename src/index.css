@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-primary: #3B82F6;
   --color-primary-50: #EFF6FF;
@@ -69,12 +71,26 @@
     @apply border-dark-200;
   }
 
+  .dark * {
+    border-color: #334155;
+  }
+
   html {
     scroll-behavior: smooth;
   }
 
   body {
     @apply bg-white text-dark-900 font-sans antialiased;
+    --toast-bg: #fff;
+    --toast-color: #1e293b;
+  }
+
+  .dark body,
+  html.dark body {
+    background-color: #0F172A;
+    color: #E2E8F0;
+    --toast-bg: #1E293B;
+    --toast-color: #E2E8F0;
   }
 
   /* Focus-visible styles for accessibility */
@@ -158,8 +174,21 @@
   background: #94A3B8;
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background: #475569;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #64748B;
+}
+
 /* Selection color */
 ::selection {
   background: #BFDBFE;
   color: #1E3A8A;
+}
+
+.dark ::selection {
+  background: #1E40AF;
+  color: #DBEAFE;
 }

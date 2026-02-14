@@ -18,10 +18,10 @@ const Signup = lazy(() => import("@/pages/Signup"));
 
 function LoadingFallback() {
   return (
-    <div className="min-h-screen flex items-center justify-center">
+    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-dark-900">
       <div className="text-center">
         <Loader2 className="w-8 h-8 animate-spin text-primary-500 mx-auto mb-3" />
-        <p className="text-sm text-dark-400">Loading...</p>
+        <p className="text-sm text-dark-400 dark:text-dark-500">Loading...</p>
       </div>
     </div>
   );

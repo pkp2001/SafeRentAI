@@ -71,11 +71,11 @@ export default function Signup() {
   const strengthLabels = ["Weak", "Fair", "Good", "Strong"];
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white via-primary-50/30 to-white px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white via-primary-50/30 to-white dark:from-dark-900 dark:via-dark-800/30 dark:to-dark-900 px-4 py-12">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary-100/40 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-success-100/30 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary-100/40 dark:bg-primary-900/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-success-100/30 dark:bg-success-700/10 rounded-full blur-3xl" />
       </div>
 
       <motion.div
@@ -89,19 +89,19 @@ export default function Signup() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
               <Shield className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold">SafeRent AI</span>
+            <span className="text-xl font-bold dark:text-white">SafeRent AI</span>
           </Link>
-          <h1 className="text-2xl font-bold">Create your account</h1>
-          <p className="text-dark-500 mt-1">Start renting safely in minutes</p>
+          <h1 className="text-2xl font-bold dark:text-dark-100">Create your account</h1>
+          <p className="text-dark-500 dark:text-dark-400 mt-1">Start renting safely in minutes</p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl border border-dark-100 shadow-xl shadow-dark-900/5 p-8">
+        <div className="bg-white dark:bg-dark-800 rounded-2xl border border-dark-100 dark:border-dark-700 shadow-xl shadow-dark-900/5 dark:shadow-dark-900/20 p-8">
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="full_name">Full Name</Label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400 dark:text-dark-500" />
                 <Input
                   id="full_name"
                   {...register("full_name")}
@@ -117,7 +117,7 @@ export default function Signup() {
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400 dark:text-dark-500" />
                 <Input
                   id="email"
                   type="email"
@@ -134,7 +134,7 @@ export default function Signup() {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400 dark:text-dark-500" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
@@ -145,7 +145,7 @@ export default function Signup() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-dark-600"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-dark-600 dark:text-dark-500 dark:hover:text-dark-300"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -160,12 +160,12 @@ export default function Signup() {
                       <div
                         key={i}
                         className={`h-1.5 flex-1 rounded-full transition-colors ${
-                          i < passwordStrength ? strengthColors[passwordStrength - 1] : "bg-dark-100"
+                          i < passwordStrength ? strengthColors[passwordStrength - 1] : "bg-dark-100 dark:bg-dark-700"
                         }`}
                       />
                     ))}
                   </div>
-                  <p className="text-xs text-dark-500">
+                  <p className="text-xs text-dark-500 dark:text-dark-400">
                     {passwordStrength > 0 && strengthLabels[passwordStrength - 1]}
                   </p>
                   <div className="space-y-1">
@@ -174,9 +174,9 @@ export default function Signup() {
                         {check.test(password) ? (
                           <Check className="w-3 h-3 text-success-500" />
                         ) : (
-                          <X className="w-3 h-3 text-dark-300" />
+                          <X className="w-3 h-3 text-dark-300 dark:text-dark-500" />
                         )}
-                        <span className={check.test(password) ? "text-success-600" : "text-dark-400"}>
+                        <span className={check.test(password) ? "text-success-600 dark:text-success-400" : "text-dark-400 dark:text-dark-500"}>
                           {check.label}
                         </span>
                       </div>
@@ -192,7 +192,7 @@ export default function Signup() {
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirm Password</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400 dark:text-dark-500" />
                 <Input
                   id="confirmPassword"
                   type="password"
@@ -216,7 +216,7 @@ export default function Signup() {
                 }}
               />
               <label
-                className="text-sm text-dark-500 cursor-pointer leading-tight"
+                className="text-sm text-dark-500 dark:text-dark-400 cursor-pointer leading-tight"
                 onClick={() => {
                   const val = !agreeTerms;
                   setAgreeTerms(val);
@@ -246,9 +246,9 @@ export default function Signup() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-sm text-dark-500 mt-6">
+        <p className="text-center text-sm text-dark-500 dark:text-dark-400 mt-6">
           Already have an account?{" "}
-          <Link to="/login" className="text-primary-500 hover:text-primary-600 font-medium">
+          <Link to="/login" className="text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 font-medium">
             Sign in
           </Link>
         </p>

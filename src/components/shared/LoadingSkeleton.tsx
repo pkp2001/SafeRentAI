@@ -10,7 +10,7 @@ function Shimmer({ className }: { className?: string }) {
   return (
     <div
       className={cn(
-        "animate-pulse rounded-xl bg-gradient-to-r from-dark-100 via-dark-200 to-dark-100 bg-[length:200%_100%]",
+        "animate-pulse rounded-xl bg-gradient-to-r from-dark-100 via-dark-200 to-dark-100 dark:from-dark-700 dark:via-dark-600 dark:to-dark-700 bg-[length:200%_100%]",
         className
       )}
     />
@@ -24,7 +24,7 @@ export function LoadingSkeleton({ className, variant = "card", count = 1 }: Load
     return (
       <div className={cn("grid gap-6", className)}>
         {items.map((i) => (
-          <div key={i} className="rounded-xl border border-dark-200 p-0 overflow-hidden">
+          <div key={i} className="rounded-xl border border-dark-200 dark:border-dark-700 p-0 overflow-hidden">
             <Shimmer className="h-48 w-full rounded-none" />
             <div className="p-4 space-y-3">
               <Shimmer className="h-6 w-3/4" />
@@ -46,7 +46,7 @@ export function LoadingSkeleton({ className, variant = "card", count = 1 }: Load
     return (
       <div className={cn("space-y-4", className)}>
         {items.map((i) => (
-          <div key={i} className="flex items-center gap-4 p-4 rounded-xl border border-dark-200">
+          <div key={i} className="flex items-center gap-4 p-4 rounded-xl border border-dark-200 dark:border-dark-700">
             <Shimmer className="h-16 w-16 rounded-lg shrink-0" />
             <div className="flex-1 space-y-2">
               <Shimmer className="h-5 w-3/4" />

@@ -146,11 +146,11 @@ export default function Resources() {
     <div className="max-w-4xl mx-auto px-4 py-8">
       {/* Hero */}
       <motion.div {...fadeUp} className="text-center mb-12">
-        <div className="w-16 h-16 rounded-2xl bg-primary-50 flex items-center justify-center mx-auto mb-4">
+        <div className="w-16 h-16 rounded-2xl bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center mx-auto mb-4">
           <BookOpen className="w-8 h-8 text-primary-600" />
         </div>
-        <h1 className="text-3xl sm:text-4xl font-bold mb-3">Tenant Resources & Support</h1>
-        <p className="text-lg text-dark-500 max-w-2xl mx-auto">
+        <h1 className="text-3xl sm:text-4xl font-bold mb-3 dark:text-dark-100">Tenant Resources & Support</h1>
+        <p className="text-lg text-dark-500 dark:text-dark-300 max-w-2xl mx-auto">
           Everything you need to know about renting safely in Australia
         </p>
       </motion.div>
@@ -158,29 +158,29 @@ export default function Resources() {
       {/* Scam Detection */}
       <motion.section {...fadeUp} transition={{ delay: 0.1 }} className="mb-12">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-danger-50 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-danger-50 dark:bg-danger-700/20 flex items-center justify-center">
             <Shield className="w-5 h-5 text-danger-600" />
           </div>
-          <h2 className="text-2xl font-bold">How to Spot Scams</h2>
+          <h2 className="text-2xl font-bold dark:text-dark-100">How to Spot Scams</h2>
         </div>
         <Accordion type="single" collapsible className="space-y-2">
           {scamRedFlags.map((flag, index) => (
             <AccordionItem
               key={index}
               value={`flag-${index}`}
-              className="bg-white rounded-xl border border-dark-100 px-5"
+              className="bg-white dark:bg-dark-800 rounded-xl border border-dark-100 dark:border-dark-700 px-5"
             >
               <AccordionTrigger className="text-left font-medium py-4">
                 <div className="flex items-center gap-3">
-                  <span className="w-6 h-6 rounded-full bg-danger-100 text-danger-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
+                  <span className="w-6 h-6 rounded-full bg-danger-100 dark:bg-danger-700/20 text-danger-600 flex items-center justify-center text-xs font-bold flex-shrink-0">
                     {index + 1}
                   </span>
                   {flag.title}
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pb-4">
-                <p className="text-dark-500 mb-3">{flag.description}</p>
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-success-50 text-success-700 text-sm">
+                <p className="text-dark-500 dark:text-dark-300 mb-3">{flag.description}</p>
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-success-50 dark:bg-success-700/10 text-success-700 dark:text-success-200 text-sm">
                   <Shield className="w-4 h-4 mt-0.5 flex-shrink-0" />
                   <span><strong>What to do:</strong> {flag.action}</span>
                 </div>
@@ -193,10 +193,10 @@ export default function Resources() {
       {/* State Resources */}
       <motion.section {...fadeUp} transition={{ delay: 0.2 }} className="mb-12">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
             <MapPin className="w-5 h-5 text-primary-600" />
           </div>
-          <h2 className="text-2xl font-bold">State Resources</h2>
+          <h2 className="text-2xl font-bold dark:text-dark-100">State Resources</h2>
         </div>
 
         <div className="flex gap-2 mb-4 overflow-x-auto pb-2">
@@ -207,7 +207,7 @@ export default function Resources() {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors whitespace-nowrap ${
                 activeState === s.state
                   ? "bg-primary-500 text-white"
-                  : "bg-dark-100 text-dark-600 hover:bg-dark-200"
+                  : "bg-dark-100 dark:bg-dark-700 text-dark-600 dark:text-dark-300 hover:bg-dark-200 dark:hover:bg-dark-600"
               }`}
             >
               {s.state}
@@ -215,20 +215,20 @@ export default function Resources() {
           ))}
         </div>
 
-        <div className="bg-white rounded-xl border border-dark-100 p-6 space-y-4">
-          <h3 className="text-lg font-semibold">{currentState.authority}</h3>
+        <div className="bg-white dark:bg-dark-800 rounded-xl border border-dark-100 dark:border-dark-700 p-6 space-y-4">
+          <h3 className="text-lg font-semibold dark:text-dark-100">{currentState.authority}</h3>
           <div className="grid sm:grid-cols-2 gap-4">
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-dark-50">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-dark-50 dark:bg-dark-700">
               <Phone className="w-4 h-4 text-dark-400" />
               <div>
-                <p className="text-xs text-dark-400">Phone</p>
-                <p className="text-sm font-medium">{currentState.phone}</p>
+                <p className="text-xs text-dark-400 dark:text-dark-500">Phone</p>
+                <p className="text-sm font-medium dark:text-dark-200">{currentState.phone}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-dark-50">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-dark-50 dark:bg-dark-700">
               <ExternalLink className="w-4 h-4 text-dark-400" />
               <div>
-                <p className="text-xs text-dark-400">Website</p>
+                <p className="text-xs text-dark-400 dark:text-dark-500">Website</p>
                 <a
                   href={currentState.website}
                   target="_blank"
@@ -239,18 +239,18 @@ export default function Resources() {
                 </a>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-dark-50">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-dark-50 dark:bg-dark-700">
               <DollarSign className="w-4 h-4 text-dark-400" />
               <div>
-                <p className="text-xs text-dark-400">Bond</p>
-                <p className="text-sm font-medium">{currentState.bond}</p>
+                <p className="text-xs text-dark-400 dark:text-dark-500">Bond</p>
+                <p className="text-sm font-medium dark:text-dark-200">{currentState.bond}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 p-3 rounded-lg bg-danger-50">
+            <div className="flex items-center gap-3 p-3 rounded-lg bg-danger-50 dark:bg-danger-700/10">
               <AlertTriangle className="w-4 h-4 text-danger-500" />
               <div>
                 <p className="text-xs text-danger-500">Emergency Housing</p>
-                <p className="text-sm font-medium">{currentState.emergency}</p>
+                <p className="text-sm font-medium dark:text-dark-200">{currentState.emergency}</p>
               </div>
             </div>
           </div>
@@ -260,24 +260,24 @@ export default function Resources() {
       {/* Templates */}
       <motion.section {...fadeUp} transition={{ delay: 0.3 }} className="mb-12">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-success-50 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-success-50 dark:bg-success-700/20 flex items-center justify-center">
             <Download className="w-5 h-5 text-success-600" />
           </div>
-          <h2 className="text-2xl font-bold">Downloadable Templates</h2>
+          <h2 className="text-2xl font-bold dark:text-dark-100">Downloadable Templates</h2>
         </div>
         <div className="grid sm:grid-cols-2 gap-4">
           {templates.map((template) => (
             <div
               key={template.name}
-              className="flex items-center justify-between p-4 bg-white rounded-xl border border-dark-100 hover:border-dark-200 transition-colors"
+              className="flex items-center justify-between p-4 bg-white dark:bg-dark-800 rounded-xl border border-dark-100 dark:border-dark-700 hover:border-dark-200 dark:hover:border-dark-600 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-lg bg-dark-50 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-lg bg-dark-50 dark:bg-dark-700 flex items-center justify-center">
                   <template.icon className="w-5 h-5 text-dark-400" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium">{template.name}</p>
-                  <p className="text-xs text-dark-400">{template.desc}</p>
+                  <p className="text-sm font-medium dark:text-dark-200">{template.name}</p>
+                  <p className="text-xs text-dark-400 dark:text-dark-500">{template.desc}</p>
                 </div>
               </div>
               <Button variant="ghost" size="sm">
@@ -291,39 +291,39 @@ export default function Resources() {
       {/* Centrelink Support */}
       <motion.section {...fadeUp} transition={{ delay: 0.4 }} className="mb-12">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-warning-50 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-warning-50 dark:bg-warning-600/20 flex items-center justify-center">
             <DollarSign className="w-5 h-5 text-warning-600" />
           </div>
-          <h2 className="text-2xl font-bold">Centrelink Support</h2>
+          <h2 className="text-2xl font-bold dark:text-dark-100">Centrelink Support</h2>
         </div>
-        <div className="bg-white rounded-xl border border-dark-100 p-6 space-y-4">
+        <div className="bg-white dark:bg-dark-800 rounded-xl border border-dark-100 dark:border-dark-700 p-6 space-y-4">
           <div className="grid sm:grid-cols-2 gap-4">
-            <div className="p-4 rounded-lg bg-primary-50">
-              <h4 className="font-semibold text-sm mb-2">Commonwealth Rent Assistance</h4>
-              <p className="text-xs text-dark-500 mb-2">
+            <div className="p-4 rounded-lg bg-primary-50 dark:bg-primary-900/20">
+              <h4 className="font-semibold text-sm mb-2 dark:text-dark-100">Commonwealth Rent Assistance</h4>
+              <p className="text-xs text-dark-500 dark:text-dark-300 mb-2">
                 Extra payment for eligible Centrelink recipients who rent in the private market.
               </p>
               <Badge variant="secondary" className="text-xs">Up to $188.20/fortnight</Badge>
             </div>
-            <div className="p-4 rounded-lg bg-success-50">
-              <h4 className="font-semibold text-sm mb-2">Who Qualifies?</h4>
-              <ul className="text-xs text-dark-500 space-y-1">
+            <div className="p-4 rounded-lg bg-success-50 dark:bg-success-700/10">
+              <h4 className="font-semibold text-sm mb-2 dark:text-dark-100">Who Qualifies?</h4>
+              <ul className="text-xs text-dark-500 dark:text-dark-300 space-y-1">
                 <li>• Receiving Centrelink payment</li>
                 <li>• Paying rent above threshold</li>
                 <li>• Not in public housing</li>
                 <li>• Rent verified by landlord</li>
               </ul>
             </div>
-            <div className="p-4 rounded-lg bg-warning-50">
-              <h4 className="font-semibold text-sm mb-2">How to Apply</h4>
-              <p className="text-xs text-dark-500">
+            <div className="p-4 rounded-lg bg-warning-50 dark:bg-warning-600/10">
+              <h4 className="font-semibold text-sm mb-2 dark:text-dark-100">How to Apply</h4>
+              <p className="text-xs text-dark-500 dark:text-dark-300">
                 Apply through myGov or call Centrelink on <strong>132 850</strong>. You'll need your
                 lease agreement and landlord details.
               </p>
             </div>
-            <div className="p-4 rounded-lg bg-dark-50">
-              <h4 className="font-semibold text-sm mb-2">Contact</h4>
-              <p className="text-xs text-dark-500">
+            <div className="p-4 rounded-lg bg-dark-50 dark:bg-dark-700">
+              <h4 className="font-semibold text-sm mb-2 dark:text-dark-100">Contact</h4>
+              <p className="text-xs text-dark-500 dark:text-dark-300">
                 Phone: <strong>132 850</strong><br />
                 Online: <strong>my.gov.au</strong><br />
                 In person: Visit your local Centrelink office
@@ -336,22 +336,22 @@ export default function Resources() {
       {/* FAQ */}
       <motion.section {...fadeUp} transition={{ delay: 0.5 }} className="mb-12">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center">
+          <div className="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
             <HelpCircle className="w-5 h-5 text-primary-600" />
           </div>
-          <h2 className="text-2xl font-bold">Frequently Asked Questions</h2>
+          <h2 className="text-2xl font-bold dark:text-dark-100">Frequently Asked Questions</h2>
         </div>
         <Accordion type="single" collapsible className="space-y-2">
           {faqs.map((faq, index) => (
             <AccordionItem
               key={index}
               value={`faq-${index}`}
-              className="bg-white rounded-xl border border-dark-100 px-5"
+              className="bg-white dark:bg-dark-800 rounded-xl border border-dark-100 dark:border-dark-700 px-5"
             >
               <AccordionTrigger className="text-left font-medium py-4">
                 {faq.q}
               </AccordionTrigger>
-              <AccordionContent className="pb-4 text-dark-500">
+              <AccordionContent className="pb-4 text-dark-500 dark:text-dark-300">
                 {faq.a}
               </AccordionContent>
             </AccordionItem>

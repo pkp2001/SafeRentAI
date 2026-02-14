@@ -88,7 +88,7 @@ export function ScamScanner({ onStartApplication, onClose, initialUrl = "" }: Sc
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             placeholder="Paste rental listing URL or search Sydney..."
-            className="w-full px-6 py-6 text-lg rounded-2xl bg-white/80 backdrop-blur-sm border border-dark-200 shadow-xl shadow-primary-500/10 pr-32 h-auto"
+            className="w-full px-6 py-6 text-lg rounded-2xl bg-white/80 dark:bg-dark-800/80 backdrop-blur-sm border border-dark-200 dark:border-dark-700 shadow-xl shadow-primary-500/10 dark:shadow-primary-900/20 pr-32 h-auto"
             onKeyDown={(e) => e.key === "Enter" && handleScan()}
           />
           <Button
@@ -114,7 +114,7 @@ export function ScamScanner({ onStartApplication, onClose, initialUrl = "" }: Sc
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
-              className="mt-6 p-6 rounded-2xl bg-white border border-dark-200 shadow-lg"
+              className="mt-6 p-6 rounded-2xl bg-white dark:bg-dark-800 border border-dark-200 dark:border-dark-700 shadow-lg"
             >
               <div className="flex items-center gap-3 mb-4">
                 <motion.div
@@ -123,19 +123,19 @@ export function ScamScanner({ onStartApplication, onClose, initialUrl = "" }: Sc
                 >
                   <Shield className="w-6 h-6 text-primary-500" />
                 </motion.div>
-                <span className="text-sm font-medium text-dark-600">
+                <span className="text-sm font-medium text-dark-600 dark:text-dark-300">
                   {loadingMessages[loadingMsg]}
                 </span>
               </div>
               <Progress value={progress} className="h-2" />
-              <p className="text-xs text-dark-400 mt-2">{Math.round(progress)}% complete</p>
+              <p className="text-xs text-dark-400 dark:text-dark-500 mt-2">{Math.round(progress)}% complete</p>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Example URLs */}
         <div className="mt-4 flex flex-wrap gap-2 justify-center">
-          <span className="text-xs text-dark-400">Try:</span>
+          <span className="text-xs text-dark-400 dark:text-dark-500">Try:</span>
           {["domain.com.au/example", "gumtree.com.au/listing", "realestate.com.au/property"].map(
             (example) => (
               <button
@@ -157,21 +157,21 @@ export function ScamScanner({ onStartApplication, onClose, initialUrl = "" }: Sc
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/95 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-white/95 dark:bg-dark-900/95 backdrop-blur-sm"
           >
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", damping: 20, stiffness: 300 }}
-              className="w-full max-w-lg bg-white rounded-2xl shadow-2xl border border-dark-200 overflow-hidden"
+              className="w-full max-w-lg bg-white dark:bg-dark-800 rounded-2xl shadow-2xl border border-dark-200 dark:border-dark-700 overflow-hidden"
             >
               {/* Header */}
               <div
                 className={`p-8 text-center ${
                   result.isSafe
-                    ? "bg-gradient-to-br from-success-50 to-white"
-                    : "bg-gradient-to-br from-danger-50 to-white"
+                    ? "bg-gradient-to-br from-success-50 to-white dark:from-success-900/20 dark:to-dark-800"
+                    : "bg-gradient-to-br from-danger-50 to-white dark:from-danger-900/20 dark:to-dark-800"
                 }`}
               >
                 <button
@@ -179,10 +179,10 @@ export function ScamScanner({ onStartApplication, onClose, initialUrl = "" }: Sc
                     setShowResult(false);
                     onClose?.();
                   }}
-                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-dark-100 transition-colors"
+                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-dark-100 dark:hover:bg-dark-700 transition-colors"
                   aria-label="Close scan results"
                 >
-                  <X className="w-5 h-5 text-dark-400" />
+                  <X className="w-5 h-5 text-dark-400 dark:text-dark-500" />
                 </button>
 
                 <motion.div
@@ -202,12 +202,12 @@ export function ScamScanner({ onStartApplication, onClose, initialUrl = "" }: Sc
                   )}
                 </motion.div>
 
-                <h2 className="text-2xl font-bold mb-2">
+                <h2 className="text-2xl font-bold mb-2 dark:text-dark-100">
                   {result.isSafe
                     ? "This Listing Appears Safe ✓"
                     : "⚠️ Potential Scam Detected"}
                 </h2>
-                <p className="text-dark-500">
+                <p className="text-dark-500 dark:text-dark-400">
                   {result.isSafe
                     ? "No major scam indicators detected"
                     : `${result.flags.length} red flag${result.flags.length > 1 ? "s" : ""} found`}
@@ -217,7 +217,7 @@ export function ScamScanner({ onStartApplication, onClose, initialUrl = "" }: Sc
               {/* Score */}
               <div className="px-8 py-4">
                 <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-medium text-dark-600">Scam Risk Score</span>
+                  <span className="text-sm font-medium text-dark-600 dark:text-dark-300">Scam Risk Score</span>
                   <Badge variant={result.isSafe ? "safe" : "risky"} className="text-sm px-4 py-1">
                     {result.scamScore}/100
                   </Badge>
@@ -230,8 +230,8 @@ export function ScamScanner({ onStartApplication, onClose, initialUrl = "" }: Sc
 
               {/* Flags */}
               {result.flags.length > 0 && (
-                <div className="px-8 py-4 border-t border-dark-100">
-                  <h3 className="text-sm font-semibold mb-3">
+                <div className="px-8 py-4 border-t border-dark-100 dark:border-dark-700">
+                  <h3 className="text-sm font-semibold mb-3 dark:text-dark-200">
                     {result.isSafe ? "Minor Notes" : "Red Flags Found"}
                   </h3>
                   <div className="space-y-2">
@@ -248,7 +248,7 @@ export function ScamScanner({ onStartApplication, onClose, initialUrl = "" }: Sc
                             result.isSafe ? "text-warning-500" : "text-danger-500"
                           }`}
                         />
-                        <span className="text-dark-600">{flag}</span>
+                        <span className="text-dark-600 dark:text-dark-300">{flag}</span>
                       </motion.div>
                     ))}
                   </div>
@@ -256,7 +256,7 @@ export function ScamScanner({ onStartApplication, onClose, initialUrl = "" }: Sc
               )}
 
               {/* Actions */}
-              <div className="p-6 border-t border-dark-100 flex gap-3">
+              <div className="p-6 border-t border-dark-100 dark:border-dark-700 flex gap-3">
                 {result.isSafe ? (
                   <>
                     <Button

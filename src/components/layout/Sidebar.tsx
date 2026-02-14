@@ -20,7 +20,7 @@ export function Sidebar() {
   const isActive = (path: string) => location.pathname === path;
 
   return (
-    <aside className="hidden lg:flex flex-col w-64 border-r border-dark-200 bg-white h-screen fixed left-0 top-0 pt-16">
+    <aside className="hidden lg:flex flex-col w-64 border-r border-dark-200 dark:border-dark-700 bg-white dark:bg-dark-800 h-screen fixed left-0 top-0 pt-16">
       <div className="flex-1 py-6 px-4 space-y-1">
         {sidebarLinks.map((link) => {
           const Icon = link.icon;
@@ -30,8 +30,8 @@ export function Sidebar() {
               to={link.path}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all duration-200 ${
                 isActive(link.path)
-                  ? "bg-primary-50 text-primary-600 shadow-sm"
-                  : "text-dark-600 hover:bg-dark-50 hover:text-dark-900"
+                  ? "bg-primary-50 text-primary-600 shadow-sm dark:bg-primary-900/30 dark:text-primary-400"
+                  : "text-dark-600 hover:bg-dark-50 hover:text-dark-900 dark:text-dark-400 dark:hover:bg-dark-700 dark:hover:text-dark-200"
               }`}
             >
               <Icon className="w-5 h-5" />
@@ -40,11 +40,11 @@ export function Sidebar() {
           );
         })}
       </div>
-      <div className="p-4 border-t border-dark-200">
-        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-50">
+      <div className="p-4 border-t border-dark-200 dark:border-dark-700">
+        <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-primary-50 dark:bg-primary-900/20">
           <Shield className="w-5 h-5 text-primary-500" />
           <div>
-            <p className="text-xs font-semibold text-primary-700">SafeRent AI</p>
+            <p className="text-xs font-semibold text-primary-700 dark:text-primary-400">SafeRent AI</p>
             <p className="text-xs text-primary-500">v1.0.0</p>
           </div>
         </div>

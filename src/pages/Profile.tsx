@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
+import { useTheme } from "@/hooks/useTheme";
 import toast from "react-hot-toast";
 
 const tabs = [
@@ -20,6 +21,7 @@ const tabs = [
 ];
 
 export default function Profile() {
+  const { theme, toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState("personal");
   const [isSaving, setIsSaving] = useState(false);
   const [profile, setProfile] = useState({
@@ -36,7 +38,6 @@ export default function Profile() {
     statusUpdates: true,
     newListings: false,
     weeklyDigest: true,
-    darkMode: false,
     defaultView: "grid",
   });
 
@@ -60,8 +61,8 @@ export default function Profile() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-8"
       >
-        <h1 className="text-3xl font-bold mb-2">Profile</h1>
-        <p className="text-dark-500">Manage your account and preferences</p>
+        <h1 className="text-3xl font-bold mb-2 dark:text-dark-100">Profile</h1>
+        <p className="text-dark-500 dark:text-dark-300">Manage your account and preferences</p>
       </motion.div>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -74,8 +75,8 @@ export default function Profile() {
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all whitespace-nowrap ${
                   activeTab === tab.id
-                    ? "bg-primary-50 text-primary-600"
-                    : "text-dark-500 hover:bg-dark-50"
+                    ? "bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-400"
+                    : "text-dark-500 hover:bg-dark-50 dark:text-dark-400 dark:hover:bg-dark-800"
                 }`}
               >
                 <tab.icon className="w-4 h-4" />
@@ -91,12 +92,12 @@ export default function Profile() {
             key={activeTab}
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
-            className="bg-white rounded-2xl border border-dark-100 shadow-sm p-6 sm:p-8"
+            className="bg-white dark:bg-dark-800 rounded-2xl border border-dark-100 dark:border-dark-700 shadow-sm p-6 sm:p-8"
           >
             {/* Personal Info Tab */}
             {activeTab === "personal" && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold">Personal Information</h2>
+                <h2 className="text-xl font-semibold dark:text-dark-100">Personal Information</h2>
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Full Name</Label>
@@ -175,7 +176,7 @@ export default function Profile() {
                     />
                   </div>
                 </div>
-                <div className="flex justify-end pt-4 border-t border-dark-100">
+                <div className="flex justify-end pt-4 border-t border-dark-100 dark:border-dark-700">
                   <Button onClick={handleSave} disabled={isSaving}>
                     {isSaving ? (
                       <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving...</>
@@ -191,7 +192,7 @@ export default function Profile() {
             {activeTab === "documents" && (
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold">Documents</h2>
+                  <h2 className="text-xl font-semibold dark:text-dark-100">Documents</h2>
                   <Button size="sm">
                     <Upload className="w-4 h-4 mr-2" />
                     Upload New
@@ -201,15 +202,15 @@ export default function Profile() {
                   {mockDocuments.map((doc) => (
                     <div
                       key={doc.id}
-                      className="flex items-center justify-between p-4 rounded-xl border border-dark-100 hover:border-dark-200 transition-colors"
+                      className="flex items-center justify-between p-4 rounded-xl border border-dark-100 dark:border-dark-700 hover:border-dark-200 dark:hover:border-dark-600 transition-colors"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary-50 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
                           <FileText className="w-5 h-5 text-primary-600" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{doc.name}</p>
-                          <p className="text-xs text-dark-400">
+                          <p className="text-sm font-medium dark:text-dark-200">{doc.name}</p>
+                          <p className="text-xs text-dark-400 dark:text-dark-500">
                             {doc.type} · {doc.size} · {doc.date}
                           </p>
                         </div>
@@ -231,10 +232,10 @@ export default function Profile() {
             {/* Settings Tab */}
             {activeTab === "settings" && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold">Settings</h2>
+                <h2 className="text-xl font-semibold dark:text-dark-100">Settings</h2>
 
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-dark-500 flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-dark-500 dark:text-dark-300 flex items-center gap-2">
                     <Bell className="w-4 h-4" /> Notifications
                   </h3>
                   {[
@@ -244,7 +245,7 @@ export default function Profile() {
                     { key: "weeklyDigest", label: "Weekly digest" },
                   ].map((item) => (
                     <div key={item.key} className="flex items-center justify-between py-2">
-                      <span className="text-sm">{item.label}</span>
+                      <span className="text-sm dark:text-dark-200">{item.label}</span>
                       <Switch
                         checked={(settings as any)[item.key]}
                         onCheckedChange={(checked) =>
@@ -255,25 +256,23 @@ export default function Profile() {
                   ))}
                 </div>
 
-                <div className="border-t border-dark-100 pt-4 space-y-4">
-                  <h3 className="text-sm font-semibold text-dark-500 flex items-center gap-2">
+                <div className="border-t border-dark-100 dark:border-dark-700 pt-4 space-y-4">
+                  <h3 className="text-sm font-semibold text-dark-500 dark:text-dark-300 flex items-center gap-2">
                     <Eye className="w-4 h-4" /> Display
                   </h3>
                   <div className="flex items-center justify-between py-2">
                     <div className="flex items-center gap-2">
                       <Moon className="w-4 h-4 text-dark-400" />
-                      <span className="text-sm">Dark mode</span>
+                      <span className="text-sm dark:text-dark-200">Dark mode</span>
                     </div>
                     <Switch
-                      checked={settings.darkMode}
-                      onCheckedChange={(checked) =>
-                        setSettings({ ...settings, darkMode: checked })
-                      }
+                      checked={theme === "dark"}
+                      onCheckedChange={toggleTheme}
                     />
                   </div>
                 </div>
 
-                <div className="flex justify-end pt-4 border-t border-dark-100">
+                <div className="flex justify-end pt-4 border-t border-dark-100 dark:border-dark-700">
                   <Button onClick={handleSave} disabled={isSaving}>
                     {isSaving ? (
                       <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving...</>
@@ -288,10 +287,10 @@ export default function Profile() {
             {/* Security Tab */}
             {activeTab === "security" && (
               <div className="space-y-6">
-                <h2 className="text-xl font-semibold">Security</h2>
+                <h2 className="text-xl font-semibold dark:text-dark-100">Security</h2>
 
                 <div className="space-y-4">
-                  <h3 className="text-sm font-semibold text-dark-500">Change Password</h3>
+                  <h3 className="text-sm font-semibold text-dark-500 dark:text-dark-300">Change Password</h3>
                   <div className="space-y-3">
                     <div className="space-y-2">
                       <Label>Current Password</Label>
@@ -309,12 +308,12 @@ export default function Profile() {
                   </div>
                 </div>
 
-                <div className="border-t border-dark-100 pt-4 space-y-4">
-                  <h3 className="text-sm font-semibold text-dark-500">Two-Factor Authentication</h3>
-                  <div className="flex items-center justify-between p-4 rounded-xl bg-dark-50">
+                <div className="border-t border-dark-100 dark:border-dark-700 pt-4 space-y-4">
+                  <h3 className="text-sm font-semibold text-dark-500 dark:text-dark-300">Two-Factor Authentication</h3>
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-dark-50 dark:bg-dark-700">
                     <div>
-                      <p className="text-sm font-medium">2FA is not enabled</p>
-                      <p className="text-xs text-dark-400">Add an extra layer of security</p>
+                      <p className="text-sm font-medium dark:text-dark-200">2FA is not enabled</p>
+                      <p className="text-xs text-dark-400 dark:text-dark-500">Add an extra layer of security</p>
                     </div>
                     <Button variant="outline" size="sm">
                       <Shield className="w-4 h-4 mr-2" />
@@ -323,13 +322,13 @@ export default function Profile() {
                   </div>
                 </div>
 
-                <div className="border-t border-dark-100 pt-4 space-y-4">
+                <div className="border-t border-dark-100 dark:border-dark-700 pt-4 space-y-4">
                   <h3 className="text-sm font-semibold text-danger-500 flex items-center gap-2">
                     <AlertTriangle className="w-4 h-4" /> Danger Zone
                   </h3>
-                  <div className="p-4 rounded-xl border border-danger-200 bg-danger-50/50">
-                    <p className="text-sm font-medium text-danger-700 mb-1">Delete Account</p>
-                    <p className="text-xs text-danger-600 mb-3">
+                  <div className="p-4 rounded-xl border border-danger-200 dark:border-danger-700 bg-danger-50/50 dark:bg-danger-700/10">
+                    <p className="text-sm font-medium text-danger-700 dark:text-danger-500 mb-1">Delete Account</p>
+                    <p className="text-xs text-danger-600 dark:text-danger-500 mb-3">
                       This action is permanent and cannot be undone. All your data will be deleted.
                     </p>
                     <Button variant="destructive" size="sm">

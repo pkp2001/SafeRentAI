@@ -122,7 +122,7 @@ export function AffordabilityCalculator({ initialRent = 0 }: AffordabilityCalcul
           <div className="space-y-2">
             <Label>Monthly Income ($)</Label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-400">$</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-400 dark:text-dark-500">$</span>
               <Input
                 type="number"
                 value={monthlyIncome || ""}
@@ -132,7 +132,7 @@ export function AffordabilityCalculator({ initialRent = 0 }: AffordabilityCalcul
               />
             </div>
             {monthlyIncome > 0 && (
-              <p className="text-xs text-dark-400">
+              <p className="text-xs text-dark-400 dark:text-dark-500">
                 ≈ {formatCurrency(monthlyIncome / 4.33)}/week
               </p>
             )}
@@ -141,7 +141,7 @@ export function AffordabilityCalculator({ initialRent = 0 }: AffordabilityCalcul
           <div className="space-y-2">
             <Label>Weekly Rent ($)</Label>
             <div className="relative">
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-400">$</span>
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-dark-400 dark:text-dark-500">$</span>
               <Input
                 type="number"
                 value={weeklyRent || ""}
@@ -162,9 +162,9 @@ export function AffordabilityCalculator({ initialRent = 0 }: AffordabilityCalcul
               onChange={(e) => setUtilities(Number(e.target.value))}
               className="h-2 accent-primary-500"
             />
-            <div className="flex justify-between text-xs text-dark-400">
+            <div className="flex justify-between text-xs text-dark-400 dark:text-dark-500">
               <span>$0</span>
-              <span className="font-medium text-dark-600">{formatCurrency(utilities)}</span>
+              <span className="font-medium text-dark-600 dark:text-dark-300">{formatCurrency(utilities)}</span>
               <span>$500</span>
             </div>
           </div>
@@ -179,9 +179,9 @@ export function AffordabilityCalculator({ initialRent = 0 }: AffordabilityCalcul
               onChange={(e) => setTransport(Number(e.target.value))}
               className="h-2 accent-primary-500"
             />
-            <div className="flex justify-between text-xs text-dark-400">
+            <div className="flex justify-between text-xs text-dark-400 dark:text-dark-500">
               <span>$0</span>
-              <span className="font-medium text-dark-600">{formatCurrency(transport)}</span>
+              <span className="font-medium text-dark-600 dark:text-dark-300">{formatCurrency(transport)}</span>
               <span>$500</span>
             </div>
           </div>
@@ -236,7 +236,7 @@ export function AffordabilityCalculator({ initialRent = 0 }: AffordabilityCalcul
                       >
                         {Math.round(calculations.affordabilityPercent)}%
                       </motion.span>
-                      <span className="text-xs text-dark-400">of income</span>
+                      <span className="text-xs text-dark-400 dark:text-dark-500">of income</span>
                     </div>
                   </div>
 
@@ -252,7 +252,7 @@ export function AffordabilityCalculator({ initialRent = 0 }: AffordabilityCalcul
             {/* Breakdown */}
             <Card>
               <CardContent className="pt-6 space-y-3">
-                <h3 className="text-sm font-semibold mb-4">Monthly Breakdown</h3>
+                <h3 className="text-sm font-semibold mb-4 dark:text-dark-200">Monthly Breakdown</h3>
                 {[
                   { label: "Rent", value: calculations.breakdown.rent, color: "bg-primary-500" },
                   { label: "Utilities", value: calculations.breakdown.utilities, color: "bg-warning-500" },
@@ -261,10 +261,10 @@ export function AffordabilityCalculator({ initialRent = 0 }: AffordabilityCalcul
                 ].map((item) => (
                   <div key={item.label}>
                     <div className="flex justify-between text-sm mb-1">
-                      <span className="text-dark-600">{item.label}</span>
-                      <span className="font-medium">{formatCurrency(item.value)}</span>
+                      <span className="text-dark-600 dark:text-dark-400">{item.label}</span>
+                      <span className="font-medium dark:text-dark-200">{formatCurrency(item.value)}</span>
                     </div>
-                    <div className="h-2 bg-dark-100 rounded-full overflow-hidden">
+                    <div className="h-2 bg-dark-100 dark:bg-dark-700 rounded-full overflow-hidden">
                       <motion.div
                         className={`h-full rounded-full ${item.color}`}
                         initial={{ width: 0 }}
@@ -288,13 +288,13 @@ export function AffordabilityCalculator({ initialRent = 0 }: AffordabilityCalcul
                     return <StatusIcon className={`w-5 h-5 mt-0.5 ${statusConfig[calculations.status].color}`} />;
                   })()}
                   <div>
-                    <p className="font-medium text-sm mb-1">
+                    <p className="font-medium text-sm mb-1 dark:text-dark-200">
                       {statusConfig[calculations.status].message}
                     </p>
-                    <p className="text-xs text-dark-500">
+                    <p className="text-xs text-dark-500 dark:text-dark-400">
                       Max recommended rent: {formatCurrency(calculations.maxRecommendedRent)}/week
                     </p>
-                    <p className="text-xs text-dark-500">
+                    <p className="text-xs text-dark-500 dark:text-dark-400">
                       Remaining after all expenses: {formatCurrency(calculations.remaining)}/month
                     </p>
                   </div>
@@ -306,11 +306,11 @@ export function AffordabilityCalculator({ initialRent = 0 }: AffordabilityCalcul
           <Card>
             <CardContent className="pt-6">
               <div className="flex flex-col items-center py-12 text-center">
-                <TrendingUp className="w-12 h-12 text-dark-300 mb-4" />
-                <h3 className="text-lg font-semibold text-dark-700 mb-2">
+                <TrendingUp className="w-12 h-12 text-dark-300 dark:text-dark-500 mb-4" />
+                <h3 className="text-lg font-semibold text-dark-700 dark:text-dark-200 mb-2">
                   Enter your details
                 </h3>
-                <p className="text-sm text-dark-400 max-w-xs">
+                <p className="text-sm text-dark-400 dark:text-dark-500 max-w-xs">
                   Fill in your income and rent details to see if a property fits your budget
                 </p>
               </div>

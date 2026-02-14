@@ -38,12 +38,12 @@ export function EmptyState({
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ type: "spring", delay: 0.1 }}
-        className="w-20 h-20 rounded-2xl bg-dark-100 flex items-center justify-center mb-6"
+        className="w-20 h-20 rounded-2xl bg-dark-100 dark:bg-dark-700 flex items-center justify-center mb-6"
       >
-        <Icon className="w-10 h-10 text-dark-400" />
+        <Icon className="w-10 h-10 text-dark-400 dark:text-dark-500" />
       </motion.div>
-      <h3 className="text-xl font-semibold text-dark-900 mb-2">{title}</h3>
-      <p className="text-dark-500 max-w-md mb-6">{description}</p>
+      <h3 className="text-xl font-semibold text-dark-900 dark:text-dark-100 mb-2">{title}</h3>
+      <p className="text-dark-500 dark:text-dark-400 max-w-md mb-6">{description}</p>
       {actionLabel && onAction && (
         <Button onClick={onAction} size="lg">
           {actionLabel}

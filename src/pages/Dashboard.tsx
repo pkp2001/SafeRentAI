@@ -69,8 +69,8 @@ export default function Dashboard() {
     <div className="max-w-7xl mx-auto px-4 py-8">
       {/* Header */}
       <motion.div {...fadeUp} className="mb-8">
-        <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-        <p className="text-dark-500">Welcome back! Here's your rental journey overview.</p>
+        <h1 className="text-3xl font-bold mb-2 dark:text-dark-100">Dashboard</h1>
+        <p className="text-dark-500 dark:text-dark-300">Welcome back! Here's your rental journey overview.</p>
       </motion.div>
 
       {/* Stats Grid */}
@@ -85,16 +85,16 @@ export default function Dashboard() {
             key={stat.label}
             variants={fadeUp}
             whileHover={{ y: -2 }}
-            className="bg-white rounded-xl p-5 border border-dark-100 shadow-sm hover:shadow-md transition-all"
+            className="bg-white dark:bg-dark-800 rounded-xl p-5 border border-dark-100 dark:border-dark-700 shadow-sm hover:shadow-md dark:hover:shadow-primary-900/20 transition-all"
           >
             <div className="flex items-center justify-between mb-3">
-              <div className={`w-10 h-10 rounded-lg ${stat.bg} flex items-center justify-center`}>
+              <div className={`w-10 h-10 rounded-lg ${stat.bg} dark:bg-opacity-20 flex items-center justify-center`}>
                 <stat.icon className={`w-5 h-5 ${stat.color}`} />
               </div>
-              <span className="text-xs text-dark-400">{stat.change}</span>
+              <span className="text-xs text-dark-400 dark:text-dark-500">{stat.change}</span>
             </div>
-            <p className="text-2xl font-bold">{stat.value}</p>
-            <p className="text-sm text-dark-500">{stat.label}</p>
+            <p className="text-2xl font-bold dark:text-dark-100">{stat.value}</p>
+            <p className="text-sm text-dark-500 dark:text-dark-300">{stat.label}</p>
           </motion.div>
         ))}
       </motion.div>
@@ -105,7 +105,7 @@ export default function Dashboard() {
           {/* Application Tracker */}
           <motion.div {...fadeUp} transition={{ delay: 0.2 }}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">My Applications</h2>
+              <h2 className="text-xl font-semibold dark:text-dark-100">My Applications</h2>
               <Button variant="outline" size="sm" onClick={() => navigate("/search")}>
                 <Plus className="w-4 h-4 mr-1" />
                 New Application
@@ -126,7 +126,7 @@ export default function Dashboard() {
           {/* Saved Listings */}
           <motion.div {...fadeUp} transition={{ delay: 0.3 }}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Saved Listings</h2>
+              <h2 className="text-xl font-semibold dark:text-dark-100">Saved Listings</h2>
               <Button variant="ghost" size="sm" onClick={() => navigate("/search")}>
                 View All
                 <ArrowRight className="w-4 h-4 ml-1" />
@@ -151,16 +151,16 @@ export default function Dashboard() {
 
         {/* Right Column - Activity Feed */}
         <motion.div {...fadeUp} transition={{ delay: 0.4 }}>
-          <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-          <div className="bg-white rounded-xl border border-dark-100 shadow-sm divide-y divide-dark-100">
+          <h2 className="text-xl font-semibold mb-4 dark:text-dark-100">Recent Activity</h2>
+          <div className="bg-white dark:bg-dark-800 rounded-xl border border-dark-100 dark:border-dark-700 shadow-sm divide-y divide-dark-100 dark:divide-dark-700">
             {recentActivity.map((activity, index) => (
               <div key={index} className="flex items-start gap-3 p-4">
-                <div className="w-8 h-8 rounded-lg bg-dark-50 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-lg bg-dark-50 dark:bg-dark-700 flex items-center justify-center flex-shrink-0">
                   <activity.icon className={`w-4 h-4 ${activity.color}`} />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm">{activity.action}</p>
-                  <p className="text-xs text-dark-400 mt-0.5">{activity.time}</p>
+                  <p className="text-sm dark:text-dark-200">{activity.action}</p>
+                  <p className="text-xs text-dark-400 dark:text-dark-500 mt-0.5">{activity.time}</p>
                 </div>
               </div>
             ))}
@@ -168,7 +168,7 @@ export default function Dashboard() {
 
           {/* Quick Actions */}
           <div className="mt-6 space-y-3">
-            <h3 className="text-sm font-semibold text-dark-500">Quick Actions</h3>
+            <h3 className="text-sm font-semibold text-dark-500 dark:text-dark-300">Quick Actions</h3>
             <Button
               variant="outline"
               className="w-full justify-start"

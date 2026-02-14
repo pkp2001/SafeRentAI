@@ -5,6 +5,8 @@ import { MapPin, ExternalLink, Shield, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import { getCrimeStats, getSafetyLevel } from "@/lib/crimeData";
+import { useTheme } from "@/hooks/useTheme";
 import type { SavedListing } from "@/types";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
@@ -36,6 +38,13 @@ const getMarkerIcon = (scamScore: number) => {
   return createColoredIcon("#EF4444");
 };
 
+const getSafetyMarkerIcon = (listing: SavedListing, isDark: boolean) => {
+  const stats = getCrimeStats(listing.suburb || listing.property_address);
+  if (!stats) return getMarkerIcon(listing.scam_score);
+  const safety = getSafetyLevel(stats.safetyScore);
+  return createColoredIcon(isDark ? safety.darkColor : safety.color);
+};
+
 function MapRecenter({ center }: { center: [number, number] }) {
   const map = useMap();
   map.setView(center, map.getZoom());
@@ -54,6 +63,7 @@ export function MapView({
   center = [-33.8688, 151.2093],
 }: MapViewProps) {
   const [selectedListing, setSelectedListing] = useState<SavedListing | null>(null);
+  const { theme } = useTheme();
 
   // Generate pseudo-coordinates for mock listings based on address
   const getCoordinates = (listing: SavedListing, index: number): [number, number] => {
@@ -69,7 +79,7 @@ export function MapView({
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="relative w-full h-full min-h-[500px] rounded-2xl overflow-hidden border border-dark-200"
+      className="relative w-full h-full min-h-[500px] rounded-2xl overflow-hidden border border-dark-200 dark:border-dark-700"
     >
       <MapContainer
         center={center}
@@ -86,11 +96,13 @@ export function MapView({
 
         {listings.map((listing, index) => {
           const coords = getCoordinates(listing, index);
+          const stats = getCrimeStats(listing.suburb || listing.property_address);
+          const safety = stats ? getSafetyLevel(stats.safetyScore) : null;
           return (
             <Marker
               key={listing.id}
               position={coords}
-              icon={getMarkerIcon(listing.scam_score)}
+              icon={getSafetyMarkerIcon(listing, theme === "dark")}
               eventHandlers={{
                 click: () => setSelectedListing(listing),
               }}
@@ -125,6 +137,19 @@ export function MapView({
                   <p className="text-xs text-gray-500 mb-2">
                     {listing.bedrooms} bed · {listing.bathrooms} bath
                   </p>
+                  {safety && (
+                    <div
+                      className="flex items-center gap-1.5 text-xs font-medium mb-2 px-2 py-1 rounded-md"
+                      style={{
+                        backgroundColor: safety.bgColor,
+                        color: safety.color,
+                      }}
+                    >
+                      <Shield className="w-3 h-3" />
+                      {safety.label} Area
+                      {stats && <span className="opacity-70">· Score {stats.safetyScore}</span>}
+                    </div>
+                  )}
                   <Button
                     size="sm"
                     className="w-full text-xs"
@@ -141,15 +166,17 @@ export function MapView({
       </MapContainer>
 
       {/* Legend */}
-      <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-xl p-3 shadow-lg z-[1000]">
-        <p className="text-xs font-semibold mb-2">Scam Risk</p>
+      <div className="absolute bottom-4 left-4 bg-white/90 dark:bg-dark-800/90 backdrop-blur-sm rounded-xl p-3 shadow-lg z-[1000]">
+        <p className="text-xs font-semibold mb-2 dark:text-dark-100">Area Safety</p>
         <div className="space-y-1">
           {[
-            { color: "#10B981", label: "Safe (< 30)" },
-            { color: "#F59E0B", label: "Moderate (30-60)" },
-            { color: "#EF4444", label: "High Risk (> 60)" },
+            { color: "#10B981", label: "Very Safe (80+)" },
+            { color: "#22C55E", label: "Safe (65-79)" },
+            { color: "#F59E0B", label: "Moderate (50-64)" },
+            { color: "#FB923C", label: "Caution (35-49)" },
+            { color: "#EF4444", label: "High Risk (<35)" },
           ].map((item) => (
-            <div key={item.label} className="flex items-center gap-2 text-xs">
+            <div key={item.label} className="flex items-center gap-2 text-xs dark:text-dark-300">
               <div
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: item.color }}
@@ -161,8 +188,8 @@ export function MapView({
       </div>
 
       {/* Listing count */}
-      <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg z-[1000]">
-        <p className="text-xs font-medium">{listings.length} listings</p>
+      <div className="absolute top-4 right-4 bg-white/90 dark:bg-dark-800/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg z-[1000]">
+        <p className="text-xs font-medium dark:text-dark-100">{listings.length} listings</p>
       </div>
     </motion.div>
   );

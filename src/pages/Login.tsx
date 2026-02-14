@@ -57,11 +57,11 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white via-primary-50/30 to-white px-4 py-12">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-white via-primary-50/30 to-white dark:from-dark-900 dark:via-dark-800/30 dark:to-dark-900 px-4 py-12">
       {/* Background decoration */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary-100/40 rounded-full blur-3xl" />
-        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-success-100/30 rounded-full blur-3xl" />
+        <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary-100/40 dark:bg-primary-900/20 rounded-full blur-3xl" />
+        <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-success-100/30 dark:bg-success-700/10 rounded-full blur-3xl" />
       </div>
 
       <motion.div
@@ -75,18 +75,18 @@ export default function Login() {
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center">
               <Shield className="w-6 h-6 text-white" />
             </div>
-            <span className="text-xl font-bold">SafeRent AI</span>
+            <span className="text-xl font-bold dark:text-white">SafeRent AI</span>
           </Link>
-          <h1 className="text-2xl font-bold">Welcome back</h1>
-          <p className="text-dark-500 mt-1">Sign in to your account</p>
+          <h1 className="text-2xl font-bold dark:text-dark-100">Welcome back</h1>
+          <p className="text-dark-500 dark:text-dark-400 mt-1">Sign in to your account</p>
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl border border-dark-100 shadow-xl shadow-dark-900/5 p-8">
+        <div className="bg-white dark:bg-dark-800 rounded-2xl border border-dark-100 dark:border-dark-700 shadow-xl shadow-dark-900/5 dark:shadow-dark-900/20 p-8">
           {showReset ? (
             <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Reset Password</h3>
-              <p className="text-sm text-dark-500">
+              <h3 className="text-lg font-semibold dark:text-dark-100">Reset Password</h3>
+              <p className="text-sm text-dark-500 dark:text-dark-400">
                 Enter your email and we'll send you a reset link.
               </p>
               <div className="space-y-2">
@@ -103,7 +103,7 @@ export default function Login() {
               </Button>
               <button
                 onClick={() => setShowReset(false)}
-                className="text-sm text-primary-500 hover:text-primary-600 w-full text-center"
+                className="text-sm text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 w-full text-center"
               >
                 Back to login
               </button>
@@ -113,7 +113,7 @@ export default function Login() {
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
+                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400 dark:text-dark-500" />
                   <Input
                     id="email"
                     type="email"
@@ -134,13 +134,13 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setShowReset(true)}
-                    className="text-xs text-primary-500 hover:text-primary-600"
+                    className="text-xs text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300"
                   >
                     Forgot password?
                   </button>
                 </div>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-dark-400 dark:text-dark-500" />
                   <Input
                     id="password"
                     type={showPassword ? "text" : "password"}
@@ -152,7 +152,7 @@ export default function Login() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-dark-600"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-dark-400 hover:text-dark-600 dark:text-dark-500 dark:hover:text-dark-300"
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -165,7 +165,7 @@ export default function Login() {
 
               <div className="flex items-center gap-2">
                 <Checkbox id="remember" />
-                <label htmlFor="remember" className="text-sm text-dark-500 cursor-pointer">
+                <label htmlFor="remember" className="text-sm text-dark-500 dark:text-dark-400 cursor-pointer">
                   Remember me
                 </label>
               </div>
@@ -185,9 +185,9 @@ export default function Login() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-sm text-dark-500 mt-6">
+        <p className="text-center text-sm text-dark-500 dark:text-dark-400 mt-6">
           Don't have an account?{" "}
-          <Link to="/signup" className="text-primary-500 hover:text-primary-600 font-medium">
+          <Link to="/signup" className="text-primary-500 hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 font-medium">
             Sign up
           </Link>
         </p>

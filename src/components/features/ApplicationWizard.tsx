@@ -133,9 +133,9 @@ export function ApplicationWizard({ listing, onSubmit }: ApplicationWizardProps)
         >
           <Check className="w-12 h-12 text-white" />
         </motion.div>
-        <h2 className="text-3xl font-bold mb-3">Application Submitted! 🎉</h2>
-        <p className="text-dark-500 mb-2">Your application has been sent successfully</p>
-        <p className="text-sm text-dark-400 mb-8">
+        <h2 className="text-3xl font-bold mb-3 dark:text-dark-100">Application Submitted! 🎉</h2>
+        <p className="text-dark-500 dark:text-dark-400 mb-2">Your application has been sent successfully</p>
+        <p className="text-sm text-dark-400 dark:text-dark-500 mb-8">
           Application ID: APP-{Date.now().toString(36).toUpperCase()}
         </p>
         <div className="flex gap-3 justify-center">
@@ -168,14 +168,14 @@ export function ApplicationWizard({ listing, onSubmit }: ApplicationWizardProps)
                       ? "bg-success-500 text-white"
                       : isCurrent
                       ? "bg-primary-500 text-white shadow-lg shadow-primary-500/30"
-                      : "bg-dark-100 text-dark-400"
+                      : "bg-dark-100 dark:bg-dark-700 text-dark-400"
                   }`}
                 >
                   {isCompleted ? <Check className="w-5 h-5" /> : <StepIcon className="w-5 h-5" />}
                 </div>
                 <span
                   className={`text-xs mt-2 font-medium ${
-                    isCurrent ? "text-primary-500" : isCompleted ? "text-success-500" : "text-dark-400"
+                    isCurrent ? "text-primary-500 dark:text-primary-400" : isCompleted ? "text-success-500 dark:text-success-400" : "text-dark-400 dark:text-dark-500"
                   }`}
                 >
                   {step.label}
@@ -184,7 +184,7 @@ export function ApplicationWizard({ listing, onSubmit }: ApplicationWizardProps)
               {index < steps.length - 1 && (
                 <div
                   className={`flex-1 h-0.5 mx-4 rounded-full transition-colors ${
-                    isCompleted ? "bg-success-500" : "bg-dark-200"
+                    isCompleted ? "bg-success-500" : "bg-dark-200 dark:bg-dark-700"
                   }`}
                 />
               )}
@@ -195,15 +195,15 @@ export function ApplicationWizard({ listing, onSubmit }: ApplicationWizardProps)
 
       {/* Property Info */}
       {listing && (
-        <div className="mb-6 p-4 rounded-xl bg-dark-50 border border-dark-200 flex items-center gap-4">
+        <div className="mb-6 p-4 rounded-xl bg-dark-50 dark:bg-dark-700 border border-dark-200 dark:border-dark-600 flex items-center gap-4">
           <img
             src={listing.image_url}
             alt={listing.property_address}
             className="w-16 h-16 rounded-lg object-cover"
           />
           <div>
-            <p className="font-semibold text-sm">{listing.property_address}</p>
-            <p className="text-sm text-dark-500">
+            <p className="font-semibold text-sm dark:text-dark-100">{listing.property_address}</p>
+            <p className="text-sm text-dark-500 dark:text-dark-400">
               {formatCurrency(listing.rent_amount)}/week · {listing.bedrooms} bed · {listing.bathrooms} bath
             </p>
           </div>
@@ -327,38 +327,38 @@ export function ApplicationWizard({ listing, onSubmit }: ApplicationWizardProps)
                 key={doc.key}
                 className={`border-2 border-dashed rounded-2xl p-6 text-center transition-colors ${
                   documents[doc.key]
-                    ? "border-success-300 bg-success-50"
-                    : "border-dark-200 hover:border-primary-300 hover:bg-primary-50/30"
+                    ? "border-success-300 bg-success-50 dark:border-success-700 dark:bg-success-900/20"
+                    : "border-dark-200 dark:border-dark-600 hover:border-primary-300 dark:hover:border-primary-500 hover:bg-primary-50/30 dark:hover:bg-primary-900/10"
                 }`}
               >
                 {documents[doc.key] ? (
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-success-100 flex items-center justify-center">
+                      <div className="w-10 h-10 rounded-lg bg-success-100 dark:bg-success-900/30 flex items-center justify-center">
                         <Check className="w-5 h-5 text-success-600" />
                       </div>
                       <div className="text-left">
-                        <p className="text-sm font-medium">{documents[doc.key]!.name}</p>
-                        <p className="text-xs text-dark-400">
+                        <p className="text-sm font-medium dark:text-dark-100">{documents[doc.key]!.name}</p>
+                        <p className="text-xs text-dark-400 dark:text-dark-500">
                           {(documents[doc.key]!.size / 1024).toFixed(1)} KB
                         </p>
                       </div>
                     </div>
                     <button
                       onClick={() => handleFileUpload(doc.key, null)}
-                      className="p-2 rounded-lg hover:bg-dark-100"
+                      className="p-2 rounded-lg hover:bg-dark-100 dark:hover:bg-dark-700"
                     >
-                      <X className="w-4 h-4 text-dark-400" />
+                      <X className="w-4 h-4 text-dark-400 dark:text-dark-500" />
                     </button>
                   </div>
                 ) : (
                   <label className="cursor-pointer block">
-                    <Upload className="w-8 h-8 text-dark-300 mx-auto mb-2" />
-                    <p className="text-sm font-medium mb-1">
+                    <Upload className="w-8 h-8 text-dark-300 dark:text-dark-500 mx-auto mb-2" />
+                    <p className="text-sm font-medium mb-1 dark:text-dark-200">
                       {doc.label} {doc.required && <span className="text-danger-500">*</span>}
                     </p>
-                    <p className="text-xs text-dark-400 mb-3">{doc.desc}</p>
-                    <p className="text-xs text-dark-300">PDF, JPG, PNG · Max 5MB</p>
+                    <p className="text-xs text-dark-400 dark:text-dark-500 mb-3">{doc.desc}</p>
+                    <p className="text-xs text-dark-300 dark:text-dark-600">PDF, JPG, PNG · Max 5MB</p>
                     <input
                       type="file"
                       className="hidden"
@@ -384,9 +384,9 @@ export function ApplicationWizard({ listing, onSubmit }: ApplicationWizardProps)
             className="space-y-6"
           >
             {/* AI Cover Letter */}
-            <div className="rounded-xl border border-dark-200 p-5">
+            <div className="rounded-xl border border-dark-200 dark:border-dark-700 p-5">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold flex items-center gap-2">
+                <h3 className="font-semibold flex items-center gap-2 dark:text-dark-100">
                   <Sparkles className="w-5 h-5 text-primary-500" />
                   AI Cover Letter
                 </h3>
@@ -415,39 +415,39 @@ export function ApplicationWizard({ listing, onSubmit }: ApplicationWizardProps)
                 className="resize-y"
               />
               {coverLetter && (
-                <p className="text-xs text-dark-400 mt-2">
+                <p className="text-xs text-dark-400 dark:text-dark-500 mt-2">
                   {coverLetter.split(/\s+/).length} words
                 </p>
               )}
             </div>
 
             {/* Review Summary */}
-            <div className="rounded-xl border border-dark-200 divide-y divide-dark-200">
+            <div className="rounded-xl border border-dark-200 dark:border-dark-700 divide-y divide-dark-200 dark:divide-dark-700">
               <div className="p-4">
-                <h4 className="text-sm font-semibold text-dark-500 mb-2">Personal Information</h4>
+                <h4 className="text-sm font-semibold text-dark-500 dark:text-dark-400 mb-2">Personal Information</h4>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <span className="text-dark-400">Name:</span>
-                  <span>{watchedValues.full_name || "—"}</span>
-                  <span className="text-dark-400">Email:</span>
-                  <span>{watchedValues.email || "—"}</span>
-                  <span className="text-dark-400">Phone:</span>
-                  <span>{watchedValues.phone || "—"}</span>
-                  <span className="text-dark-400">Income:</span>
-                  <span>{formatCurrency(watchedValues.monthly_income || 0)}/month</span>
+                  <span className="text-dark-400 dark:text-dark-500">Name:</span>
+                  <span className="dark:text-dark-200">{watchedValues.full_name || "—"}</span>
+                  <span className="text-dark-400 dark:text-dark-500">Email:</span>
+                  <span className="dark:text-dark-200">{watchedValues.email || "—"}</span>
+                  <span className="text-dark-400 dark:text-dark-500">Phone:</span>
+                  <span className="dark:text-dark-200">{watchedValues.phone || "—"}</span>
+                  <span className="text-dark-400 dark:text-dark-500">Income:</span>
+                  <span className="dark:text-dark-200">{formatCurrency(watchedValues.monthly_income || 0)}/month</span>
                 </div>
               </div>
               <div className="p-4">
-                <h4 className="text-sm font-semibold text-dark-500 mb-2">Documents</h4>
+                <h4 className="text-sm font-semibold text-dark-500 dark:text-dark-400 mb-2">Documents</h4>
                 <div className="space-y-1 text-sm">
                   {Object.entries(documents).map(([key, file]) => (
                     <div key={key} className="flex items-center gap-2">
                       {file ? (
                         <Check className="w-4 h-4 text-success-500" />
                       ) : (
-                        <X className="w-4 h-4 text-dark-300" />
+                        <X className="w-4 h-4 text-dark-300 dark:text-dark-600" />
                       )}
-                      <span className="capitalize">{key}:</span>
-                      <span className="text-dark-400">{file?.name || "Not uploaded"}</span>
+                      <span className="capitalize dark:text-dark-200">{key}:</span>
+                      <span className="text-dark-400 dark:text-dark-500">{file?.name || "Not uploaded"}</span>
                     </div>
                   ))}
                 </div>
@@ -455,12 +455,12 @@ export function ApplicationWizard({ listing, onSubmit }: ApplicationWizardProps)
             </div>
 
             {/* Confirmation */}
-            <div className="flex items-start gap-3 p-4 rounded-xl bg-dark-50">
+            <div className="flex items-start gap-3 p-4 rounded-xl bg-dark-50 dark:bg-dark-700/50">
               <Checkbox
                 checked={confirmed}
                 onCheckedChange={(checked) => setConfirmed(checked === true)}
               />
-              <label className="text-sm text-dark-600 cursor-pointer" onClick={() => setConfirmed(!confirmed)}>
+              <label className="text-sm text-dark-600 dark:text-dark-300 cursor-pointer" onClick={() => setConfirmed(!confirmed)}>
                 I confirm all information provided is accurate and I authorize SafeRent AI to submit
                 this application on my behalf.
               </label>
@@ -470,7 +470,7 @@ export function ApplicationWizard({ listing, onSubmit }: ApplicationWizardProps)
       </AnimatePresence>
 
       {/* Navigation */}
-      <div className="flex items-center justify-between mt-8 pt-6 border-t border-dark-200">
+      <div className="flex items-center justify-between mt-8 pt-6 border-t border-dark-200 dark:border-dark-700">
         <Button
           variant="outline"
           onClick={() => setCurrentStep((prev) => Math.max(1, prev - 1))}

@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search as SearchIcon, SlidersHorizontal, Grid3X3, Map, X,
-  ChevronDown, RotateCcw
+  ChevronDown, RotateCcw, Shield, Info
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,17 @@ import { MapView } from "@/components/features/MapView";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
 import { mockListings, sydneySuburbs } from "@/lib/mockData";
+import { getCrimeStats, getSafetyLevel, safetyLevels } from "@/lib/crimeData";
 import type { SavedListing } from "@/types";
+
+interface SafetyFilters {
+  "very-safe": boolean;
+  safe: boolean;
+  moderate: boolean;
+  caution: boolean;
+  "high-risk": boolean;
+  showAll: boolean;
+}
 
 type ViewMode = "grid" | "map";
 
@@ -29,6 +39,14 @@ export default function Search() {
   const [scamFreeOnly, setScamFreeOnly] = useState(false);
   const [sortBy, setSortBy] = useState("newest");
   const [isLoading, setIsLoading] = useState(false);
+  const [safetyFilters, setSafetyFilters] = useState<SafetyFilters>({
+    "very-safe": false,
+    safe: false,
+    moderate: false,
+    caution: false,
+    "high-risk": false,
+    showAll: true,
+  });
 
   const filteredListings = useMemo(() => {
     let results = [...mockListings];
@@ -57,6 +75,25 @@ export default function Search() {
       results = results.filter((l) => l.scam_score < 30);
     }
 
+    // Safety filter
+    if (!safetyFilters.showAll) {
+      const hasAnySelected =
+        safetyFilters["very-safe"] ||
+        safetyFilters.safe ||
+        safetyFilters.moderate ||
+        safetyFilters.caution ||
+        safetyFilters["high-risk"];
+
+      if (hasAnySelected) {
+        results = results.filter((l) => {
+          const stats = getCrimeStats(l.suburb || l.property_address);
+          if (!stats) return true; // Show listings without crime data
+          const safety = getSafetyLevel(stats.safetyScore);
+          return safetyFilters[safety.level];
+        });
+      }
+    }
+
     switch (sortBy) {
       case "price-low":
         results.sort((a, b) => a.rent_amount - b.rent_amount);
@@ -72,7 +109,7 @@ export default function Search() {
     }
 
     return results;
-  }, [searchQuery, priceRange, bedrooms, scamFreeOnly, sortBy]);
+  }, [searchQuery, priceRange, bedrooms, scamFreeOnly, sortBy, safetyFilters]);
 
   const resetFilters = () => {
     setSearchQuery("");
@@ -81,6 +118,14 @@ export default function Search() {
     setPropertyTypes([]);
     setScamFreeOnly(false);
     setSortBy("newest");
+    setSafetyFilters({
+      "very-safe": false,
+      safe: false,
+      moderate: false,
+      caution: false,
+      "high-risk": false,
+      showAll: true,
+    });
   };
 
   const activeFilterCount = [
@@ -89,12 +134,13 @@ export default function Search() {
     bedrooms !== "any",
     propertyTypes.length > 0,
     scamFreeOnly,
+    !safetyFilters.showAll,
   ].filter(Boolean).length;
 
   return (
-    <div className="min-h-screen bg-dark-50/30">
+    <div className="min-h-screen bg-dark-50/30 dark:bg-dark-900">
       {/* Search Header */}
-      <div className="bg-white border-b border-dark-200 sticky top-0 z-30">
+      <div className="bg-white dark:bg-dark-800 border-b border-dark-200 dark:border-dark-700 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
             <div className="relative flex-1">
@@ -119,11 +165,11 @@ export default function Search() {
                 </Badge>
               )}
             </Button>
-            <div className="hidden sm:flex items-center bg-dark-100 rounded-lg p-1">
+            <div className="hidden sm:flex items-center bg-dark-100 dark:bg-dark-700 rounded-lg p-1">
               <button
                 onClick={() => setViewMode("grid")}
                 className={`p-2 rounded-md transition-colors ${
-                  viewMode === "grid" ? "bg-white shadow-sm" : "text-dark-400 hover:text-dark-600"
+                  viewMode === "grid" ? "bg-white dark:bg-dark-600 shadow-sm" : "text-dark-400 hover:text-dark-600 dark:hover:text-dark-200"
                 }`}
               >
                 <Grid3X3 className="w-4 h-4" />
@@ -131,7 +177,7 @@ export default function Search() {
               <button
                 onClick={() => setViewMode("map")}
                 className={`p-2 rounded-md transition-colors ${
-                  viewMode === "map" ? "bg-white shadow-sm" : "text-dark-400 hover:text-dark-600"
+                  viewMode === "map" ? "bg-white dark:bg-dark-600 shadow-sm" : "text-dark-400 hover:text-dark-600 dark:hover:text-dark-200"
                 }`}
               >
                 <Map className="w-4 h-4" />
@@ -150,7 +196,7 @@ export default function Search() {
               >
                 <div className="pt-4 pb-2 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium text-dark-500">Price Range ($/week)</Label>
+                    <Label className="text-xs font-medium text-dark-500 dark:text-dark-300">Price Range ($/week)</Label>
                     <div className="flex items-center gap-2">
                       <Input
                         type="number"
@@ -159,7 +205,7 @@ export default function Search() {
                         placeholder="Min"
                         className="text-sm"
                       />
-                      <span className="text-dark-400">–</span>
+                      <span className="text-dark-400 dark:text-dark-500">–</span>
                       <Input
                         type="number"
                         value={priceRange[1]}
@@ -171,7 +217,7 @@ export default function Search() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium text-dark-500">Bedrooms</Label>
+                    <Label className="text-xs font-medium text-dark-500 dark:text-dark-300">Bedrooms</Label>
                     <div className="flex gap-1">
                       {["any", "1", "2", "3", "4+"].map((b) => (
                         <button
@@ -180,7 +226,7 @@ export default function Search() {
                           className={`flex-1 py-2 text-sm rounded-lg border transition-colors ${
                             bedrooms === b
                               ? "bg-primary-500 text-white border-primary-500"
-                              : "border-dark-200 hover:border-primary-300"
+                              : "border-dark-200 dark:border-dark-600 hover:border-primary-300 dark:text-dark-200"
                           }`}
                         >
                           {b === "any" ? "Any" : b}
@@ -190,7 +236,7 @@ export default function Search() {
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-xs font-medium text-dark-500">Sort By</Label>
+                    <Label className="text-xs font-medium text-dark-500 dark:text-dark-300">Sort By</Label>
                     <Select value={sortBy} onValueChange={setSortBy}>
                       <SelectTrigger>
                         <SelectValue />
@@ -205,13 +251,13 @@ export default function Search() {
                   </div>
 
                   <div className="space-y-3">
-                    <Label className="text-xs font-medium text-dark-500">Options</Label>
+                    <Label className="text-xs font-medium text-dark-500 dark:text-dark-300">Options</Label>
                     <div className="flex items-center gap-2">
                       <Checkbox
                         checked={scamFreeOnly}
                         onCheckedChange={(c) => setScamFreeOnly(c === true)}
                       />
-                      <label className="text-sm cursor-pointer" onClick={() => setScamFreeOnly(!scamFreeOnly)}>
+                      <label className="text-sm cursor-pointer dark:text-dark-200" onClick={() => setScamFreeOnly(!scamFreeOnly)}>
                         Scam-free only
                       </label>
                     </div>
@@ -224,6 +270,82 @@ export default function Search() {
                     </button>
                   </div>
                 </div>
+
+                {/* Safety Level Filter */}
+                <div className="pt-4 border-t border-dark-200 dark:border-dark-700">
+                  <div className="flex items-center justify-between mb-3">
+                    <Label className="text-xs font-semibold text-dark-500 dark:text-dark-300 flex items-center gap-1.5">
+                      <Shield className="w-3.5 h-3.5" />
+                      Area Safety Level
+                    </Label>
+                    <button
+                      className="text-dark-400 dark:text-dark-500 hover:text-primary-500 dark:hover:text-primary-400"
+                      title="Based on NSW BOCSAR crime statistics (Dec 2025)"
+                    >
+                      <Info className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2">
+                    {safetyLevels.map((sl) => {
+                      const key = sl.level as keyof SafetyFilters;
+                      const isSelected = safetyFilters[key] as boolean;
+                      return (
+                        <button
+                          key={sl.level}
+                          onClick={() =>
+                            setSafetyFilters((prev) => ({
+                              ...prev,
+                              [key]: !prev[key],
+                              showAll: false,
+                            }))
+                          }
+                          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                            isSelected
+                              ? "border-current shadow-sm"
+                              : "border-dark-200 dark:border-dark-600 text-dark-500 dark:text-dark-400 hover:border-dark-300 dark:hover:border-dark-500"
+                          }`}
+                          style={
+                            isSelected
+                              ? { color: sl.color, backgroundColor: sl.bgColor }
+                              : undefined
+                          }
+                        >
+                          <div
+                            className="w-2.5 h-2.5 rounded-full"
+                            style={{ backgroundColor: sl.color }}
+                          />
+                          {sl.label}
+                          <span className="opacity-60">({sl.range})</span>
+                        </button>
+                      );
+                    })}
+
+                    <button
+                      onClick={() =>
+                        setSafetyFilters({
+                          "very-safe": false,
+                          safe: false,
+                          moderate: false,
+                          caution: false,
+                          "high-risk": false,
+                          showAll: true,
+                        })
+                      }
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
+                        safetyFilters.showAll
+                          ? "bg-primary-50 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400 border-primary-300 dark:border-primary-700"
+                          : "border-dark-200 dark:border-dark-600 text-dark-500 dark:text-dark-400 hover:border-dark-300 dark:hover:border-dark-500"
+                      }`}
+                    >
+                      All
+                    </button>
+                  </div>
+
+                  <p className="text-[10px] text-dark-400 dark:text-dark-500 mt-2">
+                    Crime data from NSW BOCSAR (Dec 2025)
+                  </p>
+                </div>
               </motion.div>
             )}
           </AnimatePresence>
@@ -234,11 +356,11 @@ export default function Search() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         {/* Results count */}
         <div className="flex items-center justify-between mb-6">
-          <p className="text-sm text-dark-500">
-            <span className="font-semibold text-dark-900">{filteredListings.length}</span> listings found
+          <p className="text-sm text-dark-500 dark:text-dark-300">
+            <span className="font-semibold text-dark-900 dark:text-dark-100">{filteredListings.length}</span> listings found
           </p>
           <button
-            className="sm:hidden flex items-center gap-1 text-sm text-dark-500"
+            className="sm:hidden flex items-center gap-1 text-sm text-dark-500 dark:text-dark-300"
             onClick={() => setViewMode(viewMode === "grid" ? "map" : "grid")}
           >
             {viewMode === "grid" ? <Map className="w-4 h-4" /> : <Grid3X3 className="w-4 h-4" />}

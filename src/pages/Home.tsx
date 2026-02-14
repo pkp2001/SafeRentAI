@@ -75,16 +75,16 @@ export default function Home() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-to-b from-white via-primary-50/30 to-white overflow-hidden">
+      <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-to-b from-white via-primary-50/30 to-white dark:from-dark-900 dark:via-dark-800/30 dark:to-dark-900 overflow-hidden">
         {/* Background decoration */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary-100/40 rounded-full blur-3xl" />
-          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-success-100/30 rounded-full blur-3xl" />
+          <div className="absolute -top-40 -right-40 w-96 h-96 bg-primary-100/40 dark:bg-primary-900/20 rounded-full blur-3xl" />
+          <div className="absolute -bottom-40 -left-40 w-96 h-96 bg-success-100/30 dark:bg-success-900/20 rounded-full blur-3xl" />
         </div>
 
         <div className="relative max-w-4xl mx-auto px-4 text-center py-20">
           <motion.div {...fadeUp}>
-            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-50 text-primary-600 text-sm font-medium mb-6">
+            <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary-50 text-primary-600 dark:bg-primary-900/30 dark:text-primary-300 text-sm font-medium mb-6">
               <Star className="w-4 h-4" />
               Trusted by 10,000+ Australians
             </span>
@@ -93,7 +93,7 @@ export default function Home() {
           <motion.h1
             {...fadeUp}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6"
+            className="text-5xl sm:text-6xl lg:text-7xl font-bold tracking-tight mb-6 dark:text-dark-100"
           >
             Find{" "}
             <span className="bg-gradient-to-r from-primary-500 to-primary-700 bg-clip-text text-transparent">
@@ -105,7 +105,7 @@ export default function Home() {
           <motion.p
             {...fadeUp}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-xl text-dark-500 max-w-2xl mx-auto mb-12"
+            className="text-xl text-dark-500 dark:text-dark-300 max-w-2xl mx-auto mb-12"
           >
             AI-powered scam detection and automated applications for vulnerable Australians.
             Never fall for a rental scam again.
@@ -117,7 +117,7 @@ export default function Home() {
             transition={{ duration: 0.6, delay: 0.3 }}
             className="relative max-w-2xl mx-auto mb-10"
           >
-            <div className="relative flex items-center bg-white/80 backdrop-blur-sm rounded-2xl border border-dark-200 shadow-xl shadow-primary-500/10 p-2">
+            <div className="relative flex items-center bg-white/80 dark:bg-dark-800/80 backdrop-blur-sm rounded-2xl border border-dark-200 dark:border-dark-700 shadow-xl shadow-primary-500/10 p-2">
               <Search className="w-5 h-5 text-dark-400 ml-4 flex-shrink-0" />
               <Input
                 value={searchUrl}
@@ -144,7 +144,7 @@ export default function Home() {
             className="flex flex-wrap items-center justify-center gap-8"
           >
             {stats.map((stat) => (
-              <div key={stat.label} className="flex items-center gap-2 text-dark-500">
+              <div key={stat.label} className="flex items-center gap-2 text-dark-500 dark:text-dark-300">
                 <stat.icon className="w-4 h-4 text-success-500" />
                 <span className="font-semibold">{stat.value}</span>
                 <span className="text-sm">{stat.label}</span>
@@ -163,10 +163,10 @@ export default function Home() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 dark:text-dark-100">
               Everything you need to rent safely
             </h2>
-            <p className="text-lg text-dark-500 max-w-2xl mx-auto">
+            <p className="text-lg text-dark-500 dark:text-dark-300 max-w-2xl mx-auto">
               SafeRent AI protects you at every step of your rental journey
             </p>
           </motion.div>
@@ -183,13 +183,13 @@ export default function Home() {
                 key={feature.title}
                 variants={fadeUp}
                 whileHover={{ y: -4 }}
-                className="bg-white rounded-2xl p-8 border border-dark-100 shadow-sm hover:shadow-xl transition-all duration-300"
+                className="bg-white dark:bg-dark-800 rounded-2xl p-8 border border-dark-100 dark:border-dark-700 shadow-sm hover:shadow-xl dark:hover:shadow-primary-900/20 transition-all duration-300"
               >
-                <div className={`w-14 h-14 rounded-xl ${feature.bgColor} flex items-center justify-center mb-5`}>
+                <div className={`w-14 h-14 rounded-xl ${feature.bgColor} dark:bg-opacity-20 flex items-center justify-center mb-5`}>
                   <feature.icon className={`w-7 h-7 ${feature.iconColor}`} />
                 </div>
-                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                <p className="text-dark-500 leading-relaxed">{feature.description}</p>
+                <h3 className="text-xl font-semibold mb-3 dark:text-dark-100">{feature.title}</h3>
+                <p className="text-dark-500 dark:text-dark-300 leading-relaxed">{feature.description}</p>
               </motion.div>
             ))}
           </motion.div>
@@ -197,7 +197,7 @@ export default function Home() {
       </section>
 
       {/* How It Works */}
-      <section className="py-24 px-4 bg-dark-50/50">
+      <section className="py-24 px-4 bg-dark-50/50 dark:bg-dark-800/50">
         <div className="max-w-4xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -205,8 +205,8 @@ export default function Home() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">How it works</h2>
-            <p className="text-lg text-dark-500">Four simple steps to safe renting</p>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4 dark:text-dark-100">How it works</h2>
+            <p className="text-lg text-dark-500 dark:text-dark-300">Four simple steps to safe renting</p>
           </motion.div>
 
           <div className="space-y-0">
@@ -221,16 +221,16 @@ export default function Home() {
               >
                 {/* Timeline line */}
                 <div className="flex flex-col items-center">
-                  <div className="w-10 h-10 rounded-full bg-primary-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0 z-10">
+                  <div className="w-10 h-10 rounded-full bg-primary-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0 z-10 shadow-md">
                     {step.num}
                   </div>
                   {index < steps.length - 1 && (
-                    <div className="w-0.5 h-full bg-primary-200 min-h-[60px]" />
+                    <div className="w-0.5 h-full bg-primary-200 dark:bg-primary-800 min-h-[60px]" />
                   )}
                 </div>
                 <div className="pb-10">
-                  <h3 className="text-lg font-semibold mb-1">{step.title}</h3>
-                  <p className="text-dark-500">{step.desc}</p>
+                  <h3 className="text-lg font-semibold mb-1 dark:text-dark-100">{step.title}</h3>
+                  <p className="text-dark-500 dark:text-dark-300">{step.desc}</p>
                 </div>
               </motion.div>
             ))}
