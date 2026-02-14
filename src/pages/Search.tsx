@@ -14,7 +14,7 @@ import { ListingCard } from "@/components/features/ListingCard";
 import { MapView } from "@/components/features/MapView";
 import { LoadingSkeleton } from "@/components/shared/LoadingSkeleton";
 import { EmptyState } from "@/components/shared/EmptyState";
-import { mockListings, sydneySuburbs } from "@/lib/mockData";
+import { useListings, useSavedListings } from "@/hooks/useListings";
 import { getCrimeStats, getSafetyLevel, safetyLevels } from "@/lib/crimeData";
 import type { SavedListing } from "@/types";
 
@@ -33,12 +33,11 @@ export default function Search() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [showFilters, setShowFilters] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [priceRange, setPriceRange] = useState<[number, number]>([0, 1000]);
+  const [priceRange, setPriceRange] = useState<[number, number]>([0, 2000]);
   const [bedrooms, setBedrooms] = useState<string>("any");
   const [propertyTypes, setPropertyTypes] = useState<string[]>([]);
   const [scamFreeOnly, setScamFreeOnly] = useState(false);
   const [sortBy, setSortBy] = useState("newest");
-  const [isLoading, setIsLoading] = useState(false);
   const [safetyFilters, setSafetyFilters] = useState<SafetyFilters>({
     "very-safe": false,
     safe: false,
@@ -48,28 +47,28 @@ export default function Search() {
     showAll: true,
   });
 
+  // Fetch live listings from Realty-in-AU API
+  const {
+    data: apiListings,
+    isLoading: apiLoading,
+    error: apiError,
+    refetch: refetchListings,
+  } = useListings({
+    suburb: searchQuery || "Sydney",
+    state: "NSW",
+    minPrice: priceRange[0] > 0 ? priceRange[0] : undefined,
+    maxPrice: priceRange[1] < 2000 ? priceRange[1] : undefined,
+    minBedrooms: bedrooms !== "any" ? parseInt(bedrooms) : undefined,
+    propertyTypes: propertyTypes.length > 0 ? propertyTypes : undefined,
+  });
+
+  // Also fetch user's saved listings (for heart icon state, etc.)
+  const { data: savedListings } = useSavedListings();
+
+  const allListings = apiListings || [];
+
   const filteredListings = useMemo(() => {
-    let results = [...mockListings];
-
-    if (searchQuery) {
-      const q = searchQuery.toLowerCase();
-      results = results.filter(
-        (l) =>
-          l.property_address.toLowerCase().includes(q) ||
-          l.listing_url.toLowerCase().includes(q)
-      );
-    }
-
-    results = results.filter(
-      (l) => l.rent_amount >= priceRange[0] && l.rent_amount <= priceRange[1]
-    );
-
-    if (bedrooms !== "any") {
-      const beds = bedrooms === "4+" ? 4 : parseInt(bedrooms);
-      results = results.filter((l) =>
-        bedrooms === "4+" ? l.bedrooms >= beds : l.bedrooms === beds
-      );
-    }
+    let results = [...allListings];
 
     if (scamFreeOnly) {
       results = results.filter((l) => l.scam_score < 30);
@@ -87,7 +86,7 @@ export default function Search() {
       if (hasAnySelected) {
         results = results.filter((l) => {
           const stats = getCrimeStats(l.suburb || l.property_address);
-          if (!stats) return true; // Show listings without crime data
+          if (!stats) return true;
           const safety = getSafetyLevel(stats.safetyScore);
           return safetyFilters[safety.level];
         });
@@ -109,11 +108,13 @@ export default function Search() {
     }
 
     return results;
-  }, [searchQuery, priceRange, bedrooms, scamFreeOnly, sortBy, safetyFilters]);
+  }, [allListings, scamFreeOnly, sortBy, safetyFilters]);
+
+  const isLoading = apiLoading;
 
   const resetFilters = () => {
     setSearchQuery("");
-    setPriceRange([0, 1000]);
+    setPriceRange([0, 2000]);
     setBedrooms("any");
     setPropertyTypes([]);
     setScamFreeOnly(false);
@@ -130,7 +131,7 @@ export default function Search() {
 
   const activeFilterCount = [
     searchQuery,
-    priceRange[0] > 0 || priceRange[1] < 1000,
+    priceRange[0] > 0 || priceRange[1] < 2000,
     bedrooms !== "any",
     propertyTypes.length > 0,
     scamFreeOnly,
@@ -368,7 +369,18 @@ export default function Search() {
           </button>
         </div>
 
-        {isLoading ? (
+        {apiError ? (
+          <EmptyState
+            title="Failed to load listings"
+            description={
+              apiError instanceof Error
+                ? apiError.message
+                : "Something went wrong fetching listings. Check your RapidAPI key."
+            }
+            actionLabel="Retry"
+            onAction={() => refetchListings()}
+          />
+        ) : isLoading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {Array.from({ length: 6 }).map((_, i) => (
               <LoadingSkeleton key={i} variant="card" />

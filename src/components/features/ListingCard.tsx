@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Heart, Bed, Bath, Car, MapPin, Shield } from "lucide-react";
+import { Heart, Bed, Bath, Car, MapPin, Shield, ShieldCheck, ShieldAlert, CircleAlert } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,8 +22,23 @@ export function ListingCard({ listing, index = 0, compact = false, onSave }: Lis
   const scamVariant = listing.scam_score < 30 ? "safe" : listing.scam_score < 60 ? "warning" : "risky";
   const scamLabel = listing.scam_score < 30 ? "Safe" : listing.scam_score < 60 ? "Moderate" : "Risky";
 
+  // Use the pre-fetched safety_score from the listing (populated by useListings).
+  // Falls back to the in-memory cache from crimeData.ts.
   const crimeStats = getCrimeStats(listing.suburb || listing.property_address);
-  const safety = crimeStats ? getSafetyLevel(crimeStats.safetyScore) : null;
+  const score = listing.safety_score ?? crimeStats?.safetyScore;
+  const safety = score != null ? getSafetyLevel(score) : null;
+
+  const openDetail = () => {
+    navigate(`/listing/${listing.id}`, {
+      state: {
+        listing,
+        images: listing.images || (listing.image_url ? [listing.image_url] : []),
+        description: listing.description || "",
+        dateAvailable: listing.dateAvailable,
+        agent: listing.agent,
+      },
+    });
+  };
 
   return (
     <motion.div
@@ -31,7 +46,8 @@ export function ListingCard({ listing, index = 0, compact = false, onSave }: Lis
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.3 }}
       whileHover={{ y: -4 }}
-      className="group rounded-xl border border-dark-200 dark:border-dark-700 bg-white dark:bg-dark-800 overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-primary-900/10 transition-all duration-300"
+      onClick={openDetail}
+      className="group cursor-pointer rounded-xl border border-dark-200 dark:border-dark-700 bg-white dark:bg-dark-800 overflow-hidden shadow-sm hover:shadow-xl dark:hover:shadow-primary-900/10 transition-all duration-300"
     >
       {/* Image */}
       <div className="relative aspect-[4/3] overflow-hidden">
@@ -40,16 +56,18 @@ export function ListingCard({ listing, index = 0, compact = false, onSave }: Lis
           alt={listing.property_address}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
           loading="lazy"
+          onError={(e) => {
+            const target = e.currentTarget;
+            // Try without size prefix as fallback, then placeholder
+            if (!target.dataset.retried) {
+              target.dataset.retried = "1";
+              target.src = listing.image_url.replace(/\/\d+x\d+\//, "/");
+            } else {
+              target.src = "https://via.placeholder.com/800x600?text=No+Image";
+            }
+          }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-
-        {/* Scam Badge */}
-        <div className="absolute top-3 right-3">
-          <Badge variant={scamVariant} className="flex items-center gap-1 shadow-lg">
-            <Shield className="w-3 h-3" />
-            {scamLabel} · {listing.scam_score}
-          </Badge>
-        </div>
 
         {/* Safety Badge */}
         {safety && (
@@ -114,6 +132,28 @@ export function ListingCard({ listing, index = 0, compact = false, onSave }: Lis
           </p>
         </div>
 
+        {/* Scam Verification Indicator */}
+        <div className={`flex items-center gap-1.5 text-xs font-medium mb-3 px-2.5 py-1.5 rounded-lg w-fit ${
+          listing.scam_score < 30
+            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400"
+            : listing.scam_score < 60
+              ? "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+              : "bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-400"
+        }`}>
+          {listing.scam_score < 30 ? (
+            <ShieldCheck className="w-3.5 h-3.5" />
+          ) : listing.scam_score < 60 ? (
+            <ShieldAlert className="w-3.5 h-3.5" />
+          ) : (
+            <CircleAlert className="w-3.5 h-3.5" />
+          )}
+          {listing.scam_score < 30
+            ? "Verified Listing"
+            : listing.scam_score < 60
+              ? "Review Advised"
+              : "Potential Scam"}
+        </div>
+
         {/* Quick Stats */}
         {!compact && listing.distance_cbd !== undefined && (
           <div className="flex items-center gap-4 text-xs text-dark-400 dark:text-dark-500 mb-3">
@@ -126,7 +166,10 @@ export function ListingCard({ listing, index = 0, compact = false, onSave }: Lis
         <Button
           className="w-full"
           size={compact ? "sm" : "default"}
-          onClick={() => navigate(`/apply/${listing.id}`)}
+          onClick={(e) => {
+            e.stopPropagation();
+            navigate(`/apply/${listing.id}`, { state: { listing } });
+          }}
         >
           Apply Now
         </Button>

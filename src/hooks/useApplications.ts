@@ -1,40 +1,27 @@
-import { useState } from "react";
-import { mockApplications } from "@/lib/mockData";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getApplications,
+  submitApplication,
+  updateApplication,
+  deleteApplication,
+} from "@/lib/supabaseDb";
 import type { Application } from "@/types";
 
 export function useApplications() {
-  const [applications, setApplications] = useState<Application[]>(mockApplications);
-  const [isLoading] = useState(false);
+  const query = useQuery<Application[]>({
+    queryKey: ["applications"],
+    queryFn: getApplications,
+    staleTime: 2 * 60 * 1000,
+  });
 
-  const addApplication = (app: Omit<Application, "id" | "submitted_at">) => {
-    const newApp: Application = {
-      ...app,
-      id: `app-${Date.now()}`,
-      submitted_at: new Date().toISOString(),
-    };
-    setApplications((prev) => [newApp, ...prev]);
-    return newApp;
-  };
-
-  const updateApplication = (id: string, updates: Partial<Application>) => {
-    setApplications((prev) =>
-      prev.map((app) => (app.id === id ? { ...app, ...updates } : app))
-    );
-  };
-
-  const deleteApplication = (id: string) => {
-    setApplications((prev) => prev.filter((app) => app.id !== id));
-  };
+  const applications = query.data || [];
 
   const getByStatus = (status: Application["status"]) =>
     applications.filter((app) => app.status === status);
 
   return {
+    ...query,
     applications,
-    isLoading,
-    addApplication,
-    updateApplication,
-    deleteApplication,
     getByStatus,
     stats: {
       total: applications.length,
@@ -46,3 +33,43 @@ export function useApplications() {
   };
 }
 
+export function useSubmitApplication() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (app: Omit<Application, "id" | "submitted_at">) =>
+      submitApplication(app),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["applications"] });
+      qc.invalidateQueries({ queryKey: ["activity"] });
+    },
+  });
+}
+
+export function useUpdateApplication() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      id,
+      updates,
+    }: {
+      id: string;
+      updates: Partial<Application>;
+    }) => updateApplication(id, updates),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["applications"] });
+    },
+  });
+}
+
+export function useDeleteApplication() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => deleteApplication(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["applications"] });
+    },
+  });
+}

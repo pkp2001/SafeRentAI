@@ -1,91 +1,167 @@
-import { useState, useMemo } from "react";
-import { mockListings } from "@/lib/mockData";
-import type { SavedListing, FilterState } from "@/types";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  getSavedListings,
+  saveListing,
+  deleteSavedListing,
+} from "@/lib/supabaseDb";
+import {
+  searchProperties,
+  type PropertyListing,
+  type SearchParams,
+} from "@/lib/realtyApi";
+import { fetchCrimeStats } from "@/lib/crimeData";
+import { distanceToCBD } from "@/lib/geocoding";
+import type { SavedListing } from "@/types";
 
-const defaultFilters: FilterState = {
-  location: "",
-  minPrice: 0,
-  maxPrice: 1000,
-  bedrooms: "any",
-  propertyType: [],
-  petFriendly: false,
-  furnished: false,
-  parking: false,
-  scamFreeOnly: false,
-};
+// ─── Re-export the search param type for consumers ──────────
+export type { SearchParams };
 
-export function useListings() {
-  const [filters, setFilters] = useState<FilterState>(defaultFilters);
-  const [isLoading] = useState(false);
-
-  const listings = useMemo(() => {
-    let filtered = [...mockListings];
-
-    if (filters.location) {
-      const loc = filters.location.toLowerCase();
-      filtered = filtered.filter(
-        (l) =>
-          l.property_address.toLowerCase().includes(loc) ||
-          l.suburb?.toLowerCase().includes(loc)
-      );
-    }
-
-    if (filters.minPrice > 0) {
-      filtered = filtered.filter((l) => l.rent_amount >= filters.minPrice);
-    }
-
-    if (filters.maxPrice < 1000) {
-      filtered = filtered.filter((l) => l.rent_amount <= filters.maxPrice);
-    }
-
-    if (filters.bedrooms !== "any") {
-      const beds = filters.bedrooms === "4+" ? 4 : parseInt(filters.bedrooms);
-      if (filters.bedrooms === "4+") {
-        filtered = filtered.filter((l) => l.bedrooms >= beds);
-      } else {
-        filtered = filtered.filter((l) => l.bedrooms === beds);
-      }
-    }
-
-    if (filters.propertyType.length > 0) {
-      filtered = filtered.filter((l) =>
-        filters.propertyType.includes(l.property_type || "")
-      );
-    }
-
-    if (filters.petFriendly) {
-      filtered = filtered.filter((l) => l.pet_friendly);
-    }
-
-    if (filters.furnished) {
-      filtered = filtered.filter((l) => l.furnished);
-    }
-
-    if (filters.parking) {
-      filtered = filtered.filter((l) => (l.parking || 0) > 0);
-    }
-
-    if (filters.scamFreeOnly) {
-      filtered = filtered.filter((l) => l.scam_score < 30);
-    }
-
-    return filtered;
-  }, [filters]);
-
-  const resetFilters = () => setFilters(defaultFilters);
-
-  const toggleSaved = (_listingId: string) => {
-    // In a real app, this would save/unsave to Supabase
-  };
-
+// ─── Convert a PropertyListing to our SavedListing shape ─────
+function propertyToSaved(
+  p: PropertyListing,
+  extra: {
+    scam_score: number;
+    scam_flags: string[];
+    safety_score?: number;
+    distance_cbd?: number;
+  }
+): SavedListing {
   return {
-    listings,
-    allListings: mockListings as SavedListing[],
-    isLoading,
-    filters,
-    setFilters,
-    resetFilters,
-    toggleSaved,
+    id: p.id,
+    user_id: "",
+    listing_url: p.listingUrl,
+    property_address: p.address.fullAddress,
+    rent_amount: p.price.value,
+    bedrooms: p.features.bedrooms,
+    bathrooms: p.features.bathrooms,
+    image_url: p.images[0] || "",
+    scam_score: extra.scam_score,
+    scam_flags: extra.scam_flags,
+    saved_at: new Date().toISOString(),
+    property_type: p.features.propertyType,
+    parking: p.features.parking,
+    lat: p.coordinates.latitude,
+    lng: p.coordinates.longitude,
+    suburb: p.address.suburb,
+    postcode: p.address.postcode,
+    state: p.address.state,
+    safety_score: extra.safety_score,
+    distance_cbd: extra.distance_cbd,
+    // Detail fields
+    images: p.images,
+    description: p.description,
+    dateAvailable: p.dateAvailable,
+    agent: p.agent
+      ? {
+          name: p.agent.name,
+          phone: p.agent.phone,
+        }
+      : undefined,
   };
 }
 
+// ─── Fetch listings from Realty-in-AU API ────────────────────
+
+export interface ListingFilters {
+  suburb?: string;
+  state?: string;
+  minBedrooms?: number;
+  maxBedrooms?: number;
+  minPrice?: number;
+  maxPrice?: number;
+  propertyTypes?: string[];
+  page?: number;
+}
+
+export function useListings(filters: ListingFilters) {
+  return useQuery<SavedListing[]>({
+    queryKey: ["listings", filters],
+    queryFn: async () => {
+      const listings = await searchProperties({
+        suburb: filters.suburb,
+        state: filters.state || "NSW",
+        minBedrooms: filters.minBedrooms,
+        maxBedrooms: filters.maxBedrooms,
+        minPrice: filters.minPrice,
+        maxPrice: filters.maxPrice,
+        propertyType: filters.propertyTypes,
+        page: filters.page || 1,
+        listingType: "rent",
+      });
+
+      // Enrich listings with crime data and distance.
+      // NOTE: Scam scanning is NOT done here — it uses OpenAI which has
+      // strict rate limits. Scam analysis happens only when the user
+      // explicitly scans a specific listing via the ScamScanner component.
+      const enriched: SavedListing[] = await Promise.all(
+        listings.map(async (p) => {
+          let safety_score: number | undefined;
+          let distance_cbd: number | undefined;
+
+          try {
+            const crime = await fetchCrimeStats(
+              p.address.suburb,
+              p.address.state || "NSW"
+            );
+            safety_score = crime?.safetyScore;
+          } catch {
+            /* optional */
+          }
+
+          if (p.coordinates.latitude && p.coordinates.longitude) {
+            distance_cbd = distanceToCBD(
+              p.coordinates.latitude,
+              p.coordinates.longitude
+            );
+          }
+
+          return propertyToSaved(p, {
+            scam_score: 0,
+            scam_flags: [],
+            safety_score,
+            distance_cbd,
+          });
+        })
+      );
+
+      return enriched;
+    },
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
+    enabled: !!(filters.suburb || filters.state),
+  });
+}
+
+// ─── Saved listings (from Supabase) ──────────────────────────
+
+export function useSavedListings() {
+  return useQuery<SavedListing[]>({
+    queryKey: ["saved-listings"],
+    queryFn: getSavedListings,
+    staleTime: 2 * 60 * 1000,
+  });
+}
+
+export function useSaveListing() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (listing: Omit<SavedListing, "id" | "user_id" | "saved_at">) =>
+      saveListing(listing),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["saved-listings"] });
+    },
+  });
+}
+
+export function useDeleteSavedListing() {
+  const qc = useQueryClient();
+
+  return useMutation({
+    mutationFn: (listingId: string) => deleteSavedListing(listingId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["saved-listings"] });
+    },
+  });
+}

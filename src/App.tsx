@@ -13,6 +13,7 @@ const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const Apply = lazy(() => import("@/pages/Apply"));
 const Profile = lazy(() => import("@/pages/Profile"));
 const Resources = lazy(() => import("@/pages/Resources"));
+const ListingDetail = lazy(() => import("@/pages/ListingDetail"));
 const Login = lazy(() => import("@/pages/Login"));
 const Signup = lazy(() => import("@/pages/Signup"));
 
@@ -116,6 +117,14 @@ export default function App() {
                     <Profile />
                   </AnimatedPage>
                 </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/listing/:listingId"
+              element={
+                <AnimatedPage>
+                  <ListingDetail />
+                </AnimatedPage>
               }
             />
             <Route

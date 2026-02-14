@@ -51,6 +51,18 @@ export interface SavedListing {
   lng?: number;
   suburb?: string;
   distance_cbd?: number;
+  safety_score?: number;
+  postcode?: string;
+  // Extra detail fields (populated from API, not stored in Supabase)
+  images?: string[];
+  description?: string;
+  dateAvailable?: string;
+  state?: string;
+  agent?: {
+    name: string;
+    phone?: string;
+    agency?: string;
+  };
 }
 
 export interface Reference {
@@ -65,6 +77,18 @@ export interface ScamResult {
   flags: string[];
   isSafe: boolean;
   analysisDate: Date;
+  /** AI-generated summary explaining the analysis */
+  analysis?: string;
+  /** Actionable recommendations for the user */
+  recommendations?: string[];
+  /** Categorised risk breakdown */
+  riskCategories?: {
+    category: string;
+    severity: "low" | "medium" | "high";
+    detail: string;
+  }[];
+  /** Where the listing content was sourced from */
+  source?: "live-scrape" | "ai-url-analysis" | "no-api-key";
 }
 
 export interface FilterState {

@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import {
   User, FileText, Settings, Lock, Save, Loader2, Upload,
@@ -11,6 +12,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { useTheme } from "@/hooks/useTheme";
+import {
+  getProfile,
+  upsertProfile,
+  getDocuments,
+  uploadDocument,
+  deleteDocument,
+  type DocumentRecord,
+} from "@/lib/supabaseDb";
 import toast from "react-hot-toast";
 
 const tabs = [
@@ -22,17 +31,88 @@ const tabs = [
 
 export default function Profile() {
   const { theme, toggleTheme } = useTheme();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState("personal");
-  const [isSaving, setIsSaving] = useState(false);
-  const [profile, setProfile] = useState({
-    full_name: "John Smith",
-    email: "john@example.com",
-    phone: "0412 345 678",
-    current_address: "123 Example Street, Sydney NSW 2000",
-    employment_status: "Centrelink",
-    income_source: "Centrelink JobSeeker",
-    monthly_income: 1200,
+
+  // ─── Profile data ───────────────────────────────
+  const { data: dbProfile, isLoading: profileLoading } = useQuery({
+    queryKey: ["profile"],
+    queryFn: getProfile,
   });
+
+  const [profile, setProfile] = useState({
+    full_name: "",
+    email: "",
+    phone: "",
+    current_address: "",
+    employment_status: "",
+    income_source: "",
+    monthly_income: 0,
+  });
+
+  // Sync local form state when DB data arrives
+  useEffect(() => {
+    if (dbProfile) {
+      setProfile({
+        full_name: dbProfile.full_name || "",
+        email: dbProfile.email || "",
+        phone: dbProfile.phone || "",
+        current_address: dbProfile.current_address || "",
+        employment_status: dbProfile.employment_status || "",
+        income_source: dbProfile.income_source || "",
+        monthly_income: dbProfile.monthly_income || 0,
+      });
+    }
+  }, [dbProfile]);
+
+  const saveMutation = useMutation({
+    mutationFn: () => upsertProfile(profile),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["profile"] });
+      toast.success("Changes saved successfully");
+    },
+    onError: () => toast.error("Failed to save changes"),
+  });
+
+  const handleSave = () => saveMutation.mutate();
+
+  // ─── Documents data ─────────────────────────────
+  const { data: documents, isLoading: docsLoading } = useQuery<DocumentRecord[]>({
+    queryKey: ["documents"],
+    queryFn: getDocuments,
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: ({ file, type }: { file: File; type: string }) =>
+      uploadDocument(file, type),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      toast.success("Document uploaded");
+    },
+    onError: () => toast.error("Upload failed"),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (doc: DocumentRecord) => deleteDocument(doc),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      toast.success("Document deleted");
+    },
+    onError: () => toast.error("Delete failed"),
+  });
+
+  const handleUpload = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".pdf,.jpg,.jpeg,.png";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) uploadMutation.mutate({ file, type: "other" });
+    };
+    input.click();
+  };
+
+  // ─── Settings state (local — not persisted) ─────
   const [settings, setSettings] = useState({
     emailNotifications: true,
     statusUpdates: true,
@@ -41,18 +121,7 @@ export default function Profile() {
     defaultView: "grid",
   });
 
-  const handleSave = async () => {
-    setIsSaving(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setIsSaving(false);
-    toast.success("Changes saved successfully");
-  };
-
-  const mockDocuments = [
-    { id: "1", name: "Drivers_License.pdf", type: "ID", size: "1.2 MB", date: "2026-02-10" },
-    { id: "2", name: "Centrelink_Statement.pdf", type: "Income", size: "856 KB", date: "2026-02-08" },
-    { id: "3", name: "Rental_Reference.pdf", type: "Rental History", size: "420 KB", date: "2026-02-05" },
-  ];
+  const isSaving = saveMutation.isPending;
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-8">
@@ -98,93 +167,101 @@ export default function Profile() {
             {activeTab === "personal" && (
               <div className="space-y-6">
                 <h2 className="text-xl font-semibold dark:text-dark-100">Personal Information</h2>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Full Name</Label>
-                    <Input
-                      value={profile.full_name}
-                      onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                    />
+                {profileLoading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input
-                      type="email"
-                      value={profile.email}
-                      onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Phone</Label>
-                    <Input
-                      value={profile.phone}
-                      onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Employment Status</Label>
-                    <Select
-                      value={profile.employment_status}
-                      onValueChange={(v) => setProfile({ ...profile, employment_status: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["Employed", "Unemployed", "Student", "Retired", "Centrelink"].map((s) => (
-                          <SelectItem key={s} value={s}>{s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Current Address</Label>
-                  <Textarea
-                    value={profile.current_address}
-                    onChange={(e) => setProfile({ ...profile, current_address: e.target.value })}
-                    rows={2}
-                  />
-                </div>
-                <div className="grid sm:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Income Source</Label>
-                    <Select
-                      value={profile.income_source}
-                      onValueChange={(v) => setProfile({ ...profile, income_source: v })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {[
-                          "Centrelink JobSeeker", "Youth Allowance", "Age Pension",
-                          "Disability Support", "Part-time Salary", "Full-time Salary",
-                          "Casual Work", "Other",
-                        ].map((s) => (
-                          <SelectItem key={s} value={s}>{s}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Monthly Income ($)</Label>
-                    <Input
-                      type="number"
-                      value={profile.monthly_income}
-                      onChange={(e) => setProfile({ ...profile, monthly_income: +e.target.value })}
-                    />
-                  </div>
-                </div>
-                <div className="flex justify-end pt-4 border-t border-dark-100 dark:border-dark-700">
-                  <Button onClick={handleSave} disabled={isSaving}>
-                    {isSaving ? (
-                      <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving...</>
-                    ) : (
-                      <><Save className="w-4 h-4 mr-2" /> Save Changes</>
-                    )}
-                  </Button>
-                </div>
+                ) : (
+                  <>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Full Name</Label>
+                        <Input
+                          value={profile.full_name}
+                          onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Email</Label>
+                        <Input
+                          type="email"
+                          value={profile.email}
+                          onChange={(e) => setProfile({ ...profile, email: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Phone</Label>
+                        <Input
+                          value={profile.phone}
+                          onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Employment Status</Label>
+                        <Select
+                          value={profile.employment_status}
+                          onValueChange={(v) => setProfile({ ...profile, employment_status: v })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["Employed", "Unemployed", "Student", "Retired", "Centrelink"].map((s) => (
+                              <SelectItem key={s} value={s}>{s}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Current Address</Label>
+                      <Textarea
+                        value={profile.current_address}
+                        onChange={(e) => setProfile({ ...profile, current_address: e.target.value })}
+                        rows={2}
+                      />
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Income Source</Label>
+                        <Select
+                          value={profile.income_source}
+                          onValueChange={(v) => setProfile({ ...profile, income_source: v })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {[
+                              "Centrelink JobSeeker", "Youth Allowance", "Age Pension",
+                              "Disability Support", "Part-time Salary", "Full-time Salary",
+                              "Casual Work", "Other",
+                            ].map((s) => (
+                              <SelectItem key={s} value={s}>{s}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Monthly Income ($)</Label>
+                        <Input
+                          type="number"
+                          value={profile.monthly_income}
+                          onChange={(e) => setProfile({ ...profile, monthly_income: +e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex justify-end pt-4 border-t border-dark-100 dark:border-dark-700">
+                      <Button onClick={handleSave} disabled={isSaving}>
+                        {isSaving ? (
+                          <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving...</>
+                        ) : (
+                          <><Save className="w-4 h-4 mr-2" /> Save Changes</>
+                        )}
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             )}
 
@@ -193,39 +270,60 @@ export default function Profile() {
               <div className="space-y-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-semibold dark:text-dark-100">Documents</h2>
-                  <Button size="sm">
-                    <Upload className="w-4 h-4 mr-2" />
+                  <Button size="sm" onClick={handleUpload} disabled={uploadMutation.isPending}>
+                    {uploadMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <Upload className="w-4 h-4 mr-2" />
+                    )}
                     Upload New
                   </Button>
                 </div>
-                <div className="space-y-3">
-                  {mockDocuments.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="flex items-center justify-between p-4 rounded-xl border border-dark-100 dark:border-dark-700 hover:border-dark-200 dark:hover:border-dark-600 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-primary-600" />
+                {docsLoading ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+                  </div>
+                ) : (documents || []).length > 0 ? (
+                  <div className="space-y-3">
+                    {(documents || []).map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-4 rounded-xl border border-dark-100 dark:border-dark-700 hover:border-dark-200 dark:hover:border-dark-600 transition-colors"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-primary-50 dark:bg-primary-900/20 flex items-center justify-center">
+                            <FileText className="w-5 h-5 text-primary-600" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-medium dark:text-dark-200">{doc.file_name}</p>
+                            <p className="text-xs text-dark-400 dark:text-dark-500">
+                              {doc.document_type} · {doc.file_size ? `${(doc.file_size / 1024).toFixed(0)} KB` : "Unknown size"} · {new Date(doc.uploaded_at).toLocaleDateString()}
+                            </p>
+                          </div>
                         </div>
-                        <div>
-                          <p className="text-sm font-medium dark:text-dark-200">{doc.name}</p>
-                          <p className="text-xs text-dark-400 dark:text-dark-500">
-                            {doc.type} · {doc.size} · {doc.date}
-                          </p>
+                        <div className="flex items-center gap-2">
+                          <Button variant="ghost" size="sm">
+                            <Download className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-danger-500 hover:text-danger-600"
+                            onClick={() => deleteMutation.mutate(doc)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm">
-                          <Download className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="sm" className="text-danger-500 hover:text-danger-600">
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <FileText className="w-10 h-10 text-dark-300 dark:text-dark-600 mx-auto mb-3" />
+                    <p className="text-sm text-dark-500 dark:text-dark-400">No documents uploaded yet</p>
+                    <p className="text-xs text-dark-400 dark:text-dark-500 mt-1">Upload your ID, income proof, and references</p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -344,4 +442,3 @@ export default function Profile() {
     </div>
   );
 }
-
