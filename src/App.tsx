@@ -5,6 +5,7 @@ import { Loader2 } from "lucide-react";
 import { Layout } from "@/components/layout/Layout";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { ScrollToTop } from "@/components/shared/ScrollToTop";
+import { PropertyChatbot } from "@/components/features/PropertyChatbot";
 
 // Lazy load pages
 const Home = lazy(() => import("@/pages/Home"));
@@ -139,6 +140,9 @@ export default function App() {
         </Routes>
       </AnimatePresence>
     </Suspense>
+
+    {/* AI Chatbot — visible on all pages */}
+    <PropertyChatbot />
     </>
   );
 }
