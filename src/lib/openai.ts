@@ -1,8 +1,6 @@
 import type { Profile, ScamResult, SavedListing } from "@/types";
 import axios from "axios";
-
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-const OPENAI_BASE = "https://api.openai.com/v1";
+import { chatCompletion, hasAnyAIKey } from "@/lib/aiProvider";
 
 // ────────────────────────────────────────────────
 // Scam detection – REAL-TIME page scraping + AI
@@ -37,14 +35,11 @@ async function fetchListingContent(url: string): Promise<string | null> {
 
 /** Strip HTML tags and collapse whitespace to extract readable text. */
 function extractTextFromHtml(html: string): string {
-  // Remove script / style blocks
   let text = html
     .replace(/<script[\s\S]*?<\/script>/gi, "")
     .replace(/<style[\s\S]*?<\/style>/gi, "")
     .replace(/<noscript[\s\S]*?<\/noscript>/gi, "");
-  // Remove tags
   text = text.replace(/<[^>]+>/g, " ");
-  // Decode common entities
   text = text
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
@@ -52,34 +47,153 @@ function extractTextFromHtml(html: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .replace(/&nbsp;/g, " ");
-  // Collapse whitespace
   text = text.replace(/\s+/g, " ").trim();
-  // Limit to first ~6000 chars to stay within token limits
   return text.slice(0, 6000);
+}
+
+/**
+ * Robustly parse a JSON string from an AI model.
+ * Handles: markdown code fences, trailing commas, truncated output.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function safeParseJson(raw: string): any {
+  // 1. Strip markdown code fences
+  let cleaned = raw
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/\s*```\s*$/i, "")
+    .trim();
+
+  // 2. Ensure we start from the first { and end at the last }
+  const firstBrace = cleaned.indexOf("{");
+  const lastBrace = cleaned.lastIndexOf("}");
+  if (firstBrace !== -1 && lastBrace > firstBrace) {
+    cleaned = cleaned.slice(firstBrace, lastBrace + 1);
+  }
+
+  // 3. Try parsing directly
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // continue to repair attempts
+  }
+
+  // 4. Remove trailing commas before } or ]
+  cleaned = cleaned.replace(/,\s*([}\]])/g, "$1");
+  try {
+    return JSON.parse(cleaned);
+  } catch {
+    // continue
+  }
+
+  // 5. Truncated output — try to close open structures
+  //    Remove the last incomplete value (after last complete key-value pair)
+  const repaired = repairTruncatedJson(cleaned);
+  try {
+    return JSON.parse(repaired);
+  } catch {
+    // continue
+  }
+
+  // 6. Last resort — extract whatever we can with regex
+  console.warn("⚠️ Could not parse AI JSON, extracting fields manually");
+  return {
+    scamScore: extractNumber(raw, "scamScore") ?? 50,
+    isSafe: raw.includes('"isSafe": true') || raw.includes('"isSafe":true'),
+    flags: extractArray(raw, "flags"),
+    analysis: extractString(raw, "analysis") || "Analysis could not be fully parsed.",
+    recommendations: extractArray(raw, "recommendations"),
+    riskCategories: [],
+  };
+}
+
+/** Attempt to close unclosed braces/brackets in truncated JSON. */
+function repairTruncatedJson(json: string): string {
+  // Remove the last incomplete string literal (unterminated)
+  // Find the last complete key-value pair by removing from the last unmatched quote
+  let s = json;
+
+  // Count open braces / brackets
+  let openBraces = 0;
+  let openBrackets = 0;
+  let inString = false;
+
+  for (let i = 0; i < s.length; i++) {
+    const c = s[i];
+    const prev = i > 0 ? s[i - 1] : "";
+
+    if (c === '"' && prev !== "\\") {
+      inString = !inString;
+      continue;
+    }
+
+    if (inString) continue;
+
+    if (c === "{") openBraces++;
+    if (c === "}") openBraces--;
+    if (c === "[") openBrackets++;
+    if (c === "]") openBrackets--;
+  }
+
+  // If we're inside a string, truncate to before it started
+  if (inString) {
+    // Find the last opening quote and trim there
+    const lastQuote = s.lastIndexOf('"');
+    if (lastQuote > 0) {
+      s = s.slice(0, lastQuote);
+      // Remove trailing key name or comma
+      s = s.replace(/,?\s*"?[^"]*$/, "");
+    }
+  }
+
+  // Remove trailing comma
+  s = s.replace(/,\s*$/, "");
+
+  // Close open structures
+  for (let i = 0; i < openBrackets; i++) s += "]";
+  for (let i = 0; i < openBraces; i++) s += "}";
+
+  return s;
+}
+
+function extractNumber(text: string, key: string): number | null {
+  const m = text.match(new RegExp(`"${key}"\\s*:\\s*(\\d+)`));
+  return m ? parseInt(m[1]) : null;
+}
+
+function extractString(text: string, key: string): string | null {
+  const m = text.match(new RegExp(`"${key}"\\s*:\\s*"([^"]*)`));
+  return m ? m[1] : null;
+}
+
+function extractArray(text: string, key: string): string[] {
+  const m = text.match(new RegExp(`"${key}"\\s*:\\s*\\[([^\\]]*)\\]?`));
+  if (!m) return [];
+  const items = m[1].match(/"([^"]*)"/g);
+  return items ? items.map((s) => s.replace(/"/g, "")) : [];
 }
 
 /**
  * Analyse a rental listing for scam indicators.
  *
  * 1. Fetches the **real page content** from the supplied URL.
- * 2. Sends the content + URL to GPT-4o-mini for deep analysis.
+ * 2. Sends the content + URL to the AI provider chain for deep analysis.
  * 3. If the page cannot be fetched, analyses the URL alone.
- * 4. If no OpenAI key is set, returns an error result (no dummy data).
+ * 4. If no AI key is set, returns an error result (no dummy data).
  */
 export async function scanListing(
   url: string,
   description?: string
 ): Promise<ScamResult> {
-  if (!OPENAI_API_KEY) {
+  if (!hasAnyAIKey()) {
     return {
       scamScore: 0,
       flags: [],
       isSafe: false,
       analysisDate: new Date(),
       analysis:
-        "OpenAI API key is not configured. Please add VITE_OPENAI_API_KEY to your .env file to enable real-time scam scanning.",
+        "No AI API key is configured. Add at least one of VITE_OPENAI_API_KEY, VITE_GEMINI_API_KEY, or VITE_OPENROUTER_API_KEY to your .env file.",
       recommendations: [
-        "Add your OpenAI API key to the .env file",
+        "Add an AI API key to the .env file",
         "Restart the development server after updating .env",
       ],
       riskCategories: [],
@@ -118,7 +232,7 @@ async function aiScanListing(
     ? `\n\n--- LISTING PAGE CONTENT (scraped live) ---\n${pageContent}\n--- END CONTENT ---`
     : "";
 
-  const prompt = `You are an expert Australian rental scam detective. Analyse this listing IN DETAIL.
+  const userPrompt = `You are an expert Australian rental scam detective. Analyse this listing IN DETAIL.
 
 URL: ${url}
 ${description ? `Provided description: ${description}` : ""}${contentBlock}
@@ -154,81 +268,46 @@ Respond ONLY with valid JSON:
   ]
 }`;
 
-  // Retry with exponential backoff for rate limits (429)
-  const MAX_RETRIES = 3;
-  let lastError: unknown;
+  const { content: raw, provider } = await chatCompletion({
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are an expert at detecting rental scams in Australia. You perform thorough, honest analysis. When real listing content is provided, analyse it deeply. When only a URL is available, be transparent about the limitations. Never invent data. Respond only with valid JSON.",
+      },
+      { role: "user", content: userPrompt },
+    ],
+    jsonMode: true,
+    temperature: 0.2,
+    maxTokens: 2000,
+  });
 
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    try {
-      if (attempt > 0) {
-        const delay = Math.min(2000 * Math.pow(2, attempt - 1), 10000);
-        console.log(`⏳ Rate limited — retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`);
-        await new Promise((r) => setTimeout(r, delay));
-      }
+  console.log(`✅ Scam scan completed via ${provider}`);
 
-      const response = await axios.post(
-        `${OPENAI_BASE}/chat/completions`,
-        {
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content:
-                "You are an expert at detecting rental scams in Australia. You perform thorough, honest analysis. When real listing content is provided, analyse it deeply. When only a URL is available, be transparent about the limitations. Never invent data. Respond only with valid JSON.",
-            },
-            { role: "user", content: prompt },
-          ],
-          response_format: { type: "json_object" },
-          temperature: 0.2,
-          max_tokens: 1200,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+  const parsed = safeParseJson(raw);
 
-      const raw = response.data.choices[0].message.content;
-      const parsed = JSON.parse(raw);
-
-      return {
-        scamScore: Math.min(100, Math.max(0, parsed.scamScore ?? 0)),
-        flags: Array.isArray(parsed.flags) ? parsed.flags : [],
-        isSafe: parsed.isSafe ?? (parsed.scamScore ?? 0) < 30,
-        analysisDate: new Date(),
-        analysis: parsed.analysis || "",
-        recommendations: Array.isArray(parsed.recommendations)
-          ? parsed.recommendations
-          : [],
-        riskCategories: Array.isArray(parsed.riskCategories)
-          ? parsed.riskCategories.map(
-              (rc: { category?: string; severity?: string; detail?: string }) => ({
-                category: rc.category || "General",
-                severity: (["low", "medium", "high"].includes(rc.severity || "")
-                  ? rc.severity
-                  : "medium") as "low" | "medium" | "high",
-                detail: rc.detail || "",
-              })
-            )
-          : [],
-        source,
-      };
-    } catch (err: unknown) {
-      lastError = err;
-      const status = (err as { response?: { status?: number } })?.response?.status;
-      if (status !== 429) {
-        // Not a rate limit error — don't retry
-        break;
-      }
-    }
-  }
-
-  // All retries exhausted or non-429 error
-  const errorMsg =
-    lastError instanceof Error ? lastError.message : "OpenAI API request failed";
-  throw new Error(`Scan failed: ${errorMsg}. Please wait a moment and try again.`);
+  return {
+    scamScore: Math.min(100, Math.max(0, parsed.scamScore ?? 0)),
+    flags: Array.isArray(parsed.flags) ? parsed.flags : [],
+    isSafe: parsed.isSafe ?? (parsed.scamScore ?? 0) < 30,
+    analysisDate: new Date(),
+    analysis: parsed.analysis || "",
+    recommendations: Array.isArray(parsed.recommendations)
+      ? parsed.recommendations
+      : [],
+    riskCategories: Array.isArray(parsed.riskCategories)
+      ? parsed.riskCategories.map(
+          (rc: { category?: string; severity?: string; detail?: string }) => ({
+            category: rc.category || "General",
+            severity: (["low", "medium", "high"].includes(rc.severity || "")
+              ? rc.severity
+              : "medium") as "low" | "medium" | "high",
+            detail: rc.detail || "",
+          })
+        )
+      : [],
+    source,
+  };
 }
 
 // ────────────────────────────────────────────────
@@ -245,17 +324,17 @@ export interface CoverLetterContext {
  * Generate a personalised cover letter using real profile + listing data.
  *
  * 1. If a listing URL is available, fetches the **real page content** for context.
- * 2. Sends everything to GPT-4o-mini for a tailored, property-specific letter.
- * 3. Falls back to a sensible template if OpenAI is unavailable.
+ * 2. Sends everything to the AI provider chain for a tailored letter.
+ * 3. Falls back to a sensible template if all AI providers fail.
  */
 export async function generateCoverLetter(
   ctx: CoverLetterContext
 ): Promise<string> {
-  if (OPENAI_API_KEY) {
+  if (hasAnyAIKey()) {
     try {
       return await aiGenerateCoverLetter(ctx);
     } catch (error) {
-      console.error("OpenAI cover letter failed, using fallback:", error);
+      console.error("AI cover letter failed, using template fallback:", error);
     }
   }
   return templateCoverLetter(ctx);
@@ -333,7 +412,7 @@ async function aiGenerateCoverLetter(ctx: CoverLetterContext): Promise<string> {
       ? `\n\n--- LIVE LISTING PAGE CONTENT ---\n${pageContent.slice(0, 4000)}\n--- END ---`
       : "";
 
-  const prompt = `Write a professional, personalised rental application cover letter.
+  const userPrompt = `Write a professional, personalised rental application cover letter.
 
 === APPLICANT DETAILS ===
 ${applicantSection}
@@ -356,53 +435,21 @@ INSTRUCTIONS:
 - Do NOT include subject lines or email headers — just the letter body
 - Sign off with the applicant's name and contact details`;
 
-  // Retry with exponential backoff for rate limits
-  const MAX_RETRIES = 3;
-  let lastError: unknown;
+  const { content, provider } = await chatCompletion({
+    messages: [
+      {
+        role: "system",
+        content:
+          "You write outstanding rental application cover letters for Australian tenants. Your letters are personalised, genuine, and reference specific property details. You adapt your tone based on the applicant's circumstances — supportive for students and government benefit recipients, professional for employed applicants. You never fabricate details not provided. Australian English only.",
+      },
+      { role: "user", content: userPrompt },
+    ],
+    temperature: 0.7,
+    maxTokens: 800,
+  });
 
-  for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-    try {
-      if (attempt > 0) {
-        const delay = Math.min(2000 * Math.pow(2, attempt - 1), 10000);
-        console.log(
-          `⏳ Cover letter rate limited — retrying in ${delay}ms (attempt ${attempt + 1}/${MAX_RETRIES})`
-        );
-        await new Promise((r) => setTimeout(r, delay));
-      }
-
-      const response = await axios.post(
-        `${OPENAI_BASE}/chat/completions`,
-        {
-          model: "gpt-4o-mini",
-          messages: [
-            {
-              role: "system",
-              content:
-                "You write outstanding rental application cover letters for Australian tenants. Your letters are personalised, genuine, and reference specific property details. You adapt your tone based on the applicant's circumstances — supportive for students and government benefit recipients, professional for employed applicants. You never fabricate details not provided. Australian English only.",
-            },
-            { role: "user", content: prompt },
-          ],
-          temperature: 0.7,
-          max_tokens: 800,
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-
-      return response.data.choices[0].message.content?.trim() || "";
-    } catch (err: unknown) {
-      lastError = err;
-      const status = (err as { response?: { status?: number } })?.response
-        ?.status;
-      if (status !== 429) break;
-    }
-  }
-
-  throw lastError;
+  console.log(`✅ Cover letter generated via ${provider}`);
+  return content.trim();
 }
 
 function templateCoverLetter(ctx: CoverLetterContext): string {

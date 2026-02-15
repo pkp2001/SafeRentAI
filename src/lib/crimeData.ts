@@ -1,4 +1,22 @@
-import axios from "axios";
+import { chatCompletion, hasAnyAIKey } from "@/lib/aiProvider";
+
+// ────────────────────────────────────────────────
+// JSON helper
+// ────────────────────────────────────────────────
+
+/** Robustly parse JSON from AI — handles code fences, trailing commas, truncation. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function safeJsonParse(raw: string): any {
+  let s = raw.replace(/^```(?:json)?\s*/i, "").replace(/\s*```\s*$/i, "").trim();
+  const a = s.indexOf("{");
+  const b = s.lastIndexOf("}");
+  if (a !== -1 && b > a) s = s.slice(a, b + 1);
+  try { return JSON.parse(s); } catch { /* try fix */ }
+  s = s.replace(/,\s*([}\]])/g, "$1");
+  try { return JSON.parse(s); } catch { /* give up */ }
+  console.warn("⚠️ Could not parse AI JSON in crimeData, returning empty");
+  return {};
+}
 
 // ────────────────────────────────────────────────
 // Types
@@ -35,9 +53,6 @@ export interface SafetyLevel {
 
 const crimeCache = new Map<string, CrimeStats>();
 const pendingFetches = new Map<string, Promise<CrimeStats | null>>();
-
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY;
-const OPENAI_BASE = "https://api.openai.com/v1";
 
 // ────────────────────────────────────────────────
 // Fetch live crime data via OpenAI
@@ -82,9 +97,9 @@ async function _doFetch(
   state: string,
   cacheKey: string
 ): Promise<CrimeStats | null> {
-  if (!OPENAI_API_KEY) {
+  if (!hasAnyAIKey()) {
     console.warn(
-      "⚠️ No OPENAI_API_KEY — returning estimated crime data for",
+      "⚠️ No AI API key — returning estimated crime data for",
       suburb
     );
     return _estimateFallback(suburb, state);
@@ -116,32 +131,22 @@ Important:
 - Be accurate about the postcode
 - If you're unsure about exact numbers, provide your best estimate based on the suburb's known characteristics`;
 
-    const response = await axios.post(
-      `${OPENAI_BASE}/chat/completions`,
-      {
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content:
-              "You are an Australian crime statistics analyst with expertise in BOCSAR and ABS data. You provide accurate, realistic suburb-level crime statistics. Always respond with valid JSON only.",
-          },
-          { role: "user", content: prompt },
-        ],
-        response_format: { type: "json_object" },
-        temperature: 0.2,
-        max_tokens: 400,
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-          "Content-Type": "application/json",
+    const { content: raw, provider } = await chatCompletion({
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are an Australian crime statistics analyst with expertise in BOCSAR and ABS data. You provide accurate, realistic suburb-level crime statistics. Always respond with valid JSON only.",
         },
-      }
-    );
+        { role: "user", content: prompt },
+      ],
+      jsonMode: true,
+      temperature: 0.2,
+      maxTokens: 400,
+    });
 
-    const raw = response.data.choices[0].message.content;
-    const parsed = JSON.parse(raw);
+    console.log(`✅ Crime data for ${suburb} via ${provider}`);
+    const parsed = safeJsonParse(raw);
 
     const stats: CrimeStats = {
       suburb: parsed.suburb || suburb,
@@ -161,7 +166,7 @@ Important:
         month: "long",
         year: "numeric",
       }),
-      dataSource: "AI analysis of BOCSAR/ABS data",
+      dataSource: `AI analysis of BOCSAR/ABS data (${provider})`,
       topOffences: Array.isArray(parsed.topOffences)
         ? parsed.topOffences
         : undefined,

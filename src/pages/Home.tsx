@@ -265,9 +265,9 @@ export default function Home() {
               </Button>
               <Button
                 size="lg"
-                variant="outline"
+                variant="secondary"
                 onClick={() => navigate("/search")}
-                className="border-white/30 text-white hover:bg-white/10 px-8"
+                className="bg-white/20 text-white border-2 border-white/50 hover:bg-white hover:text-primary-600 px-8 backdrop-blur-sm"
               >
                 Browse Listings
               </Button>
@@ -276,12 +276,33 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* Scam Scanner Modal */}
+      {/* Scam Scanner Overlay */}
       {showScanner && (
-        <ScamScanner
-          initialUrl={searchUrl}
-          onClose={() => setShowScanner(false)}
-        />
+        <div className="fixed inset-0 z-50 bg-white/95 dark:bg-dark-900/95 backdrop-blur-sm flex flex-col items-center justify-start pt-20 px-4 overflow-y-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="w-full max-w-2xl"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <h2 className="text-2xl font-bold dark:text-dark-100">Scan Listing for Scams</h2>
+              <button
+                onClick={() => setShowScanner(false)}
+                className="p-2 rounded-lg hover:bg-dark-100 dark:hover:bg-dark-700 transition-colors"
+              >
+                <span className="sr-only">Close</span>
+                <svg className="w-5 h-5 text-dark-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <ScamScanner
+              initialUrl={searchUrl}
+              onClose={() => setShowScanner(false)}
+            />
+          </motion.div>
+        </div>
       )}
     </div>
   );

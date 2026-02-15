@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { ThemeToggle } from "@/components/shared/ThemeToggle";
+import toast from "react-hot-toast";
 
 const navLinks = [
   { path: "/", label: "Home", icon: Shield },
@@ -35,6 +36,16 @@ export function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+      toast.success("Signed out successfully");
+      navigate("/");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to sign out");
+    }
+  };
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -83,7 +94,7 @@ export function Navbar() {
                       </AvatarFallback>
                     </Avatar>
                   </Link>
-                  <Button variant="ghost" size="sm" onClick={signOut} aria-label="Sign out">
+                  <Button variant="ghost" size="sm" onClick={handleSignOut} aria-label="Sign out">
                     <LogOut className="w-4 h-4" />
                   </Button>
                 </div>
@@ -187,7 +198,7 @@ export function Navbar() {
               </div>
               <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-dark-200 dark:border-dark-700">
                 {user ? (
-                  <Button variant="outline" className="w-full" onClick={signOut}>
+                  <Button variant="outline" className="w-full" onClick={handleSignOut}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
                   </Button>

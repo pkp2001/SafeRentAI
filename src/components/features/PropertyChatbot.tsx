@@ -139,6 +139,18 @@ export function PropertyChatbot() {
   const [isLoading, setIsLoading] = useState(false);
   const [unread, setUnread] = useState(0);
 
+  // Track the most recent search criteria so follow-ups carry context forward
+  const [activeCriteria, setActiveCriteria] = useState<SearchCriteria | null>(
+    () => {
+      // Restore from the last assistant message that had searchParams
+      const saved = loadHistory();
+      for (let i = saved.length - 1; i >= 0; i--) {
+        if (saved[i].searchParams) return saved[i].searchParams!;
+      }
+      return null;
+    }
+  );
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -188,7 +200,19 @@ export function PropertyChatbot() {
           properties,
           searchCriteria,
           followUpSuggestions,
-        } = await processChatMessage(content, [...messages, userMsg]);
+        } = await processChatMessage(
+          content,
+          [...messages, userMsg],
+          activeCriteria
+        );
+
+        // Update active criteria for future follow-ups
+        const hasAny = Object.values(searchCriteria).some(
+          (v) => v !== null && v !== undefined && v !== ""
+        );
+        if (hasAny) {
+          setActiveCriteria(searchCriteria);
+        }
 
         const assistantMsg: ChatMessage = {
           id: `a-${Date.now()}`,
@@ -196,7 +220,7 @@ export function PropertyChatbot() {
           content: responseText,
           timestamp: new Date(),
           properties: properties.length > 0 ? properties : undefined,
-          searchParams: searchCriteria,
+          searchParams: hasAny ? searchCriteria : undefined,
           followUpSuggestions:
             followUpSuggestions.length > 0 ? followUpSuggestions : undefined,
         };
@@ -220,7 +244,7 @@ export function PropertyChatbot() {
         setIsLoading(false);
       }
     },
-    [input, isLoading, messages, isOpen]
+    [input, isLoading, messages, isOpen, activeCriteria]
   );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -232,6 +256,7 @@ export function PropertyChatbot() {
 
   const clearChat = () => {
     setMessages([WELCOME]);
+    setActiveCriteria(null);
     localStorage.removeItem(STORAGE_KEY);
   };
 
