@@ -191,9 +191,9 @@ export async function scanListing(
       isSafe: false,
       analysisDate: new Date(),
       analysis:
-        "No AI API key is configured. Add at least one of VITE_OPENAI_API_KEY, VITE_GEMINI_API_KEY, or VITE_OPENROUTER_API_KEY to your .env file.",
+        "No AI API key is configured. Add VITE_GEMINI_API_KEY to your .env file. Get a free key at https://aistudio.google.com/apikey",
       recommendations: [
-        "Add an AI API key to the .env file",
+        "Add VITE_GEMINI_API_KEY to the .env file",
         "Restart the development server after updating .env",
       ],
       riskCategories: [],

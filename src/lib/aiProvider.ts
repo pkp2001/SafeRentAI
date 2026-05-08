@@ -1,14 +1,12 @@
 /**
- * Centralized AI provider with automatic fallback.
- *
- * Provider chain: Gemini → OpenRouter → OpenAI
- * (Gemini first because its free tier is the most generous: 15 RPM / 1M tokens/day)
+ * Centralized AI provider — Google Gemini.
  *
  * Every AI feature in the app (scam scanning, chatbot, cover letters,
- * crime data) calls `chatCompletion()` instead of hitting a specific
- * API directly.  If a provider fails for ANY reason (rate-limit,
- * network error, invalid model, etc.) the request is transparently
- * retried on the next provider in the chain.
+ * crime data) calls `chatCompletion()` so the underlying provider
+ * can be swapped out in one place.
+ *
+ * Free tier: 15 RPM / 1M tokens/day on gemini-2.0-flash.
+ * Get a key at https://aistudio.google.com/apikey
  */
 
 import axios from "axios";
@@ -17,17 +15,11 @@ import axios from "axios";
 // Environment / config
 // ────────────────────────────────────────────────
 
-const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY as
-  | string
-  | undefined;
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY as
   | string
   | undefined;
-const OPENROUTER_API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY as
-  | string
-  | undefined;
 
-export type ProviderName = "openai" | "gemini" | "openrouter";
+export type ProviderName = "gemini";
 
 // ────────────────────────────────────────────────
 // Public types
@@ -55,21 +47,9 @@ export interface CompletionResult {
 // Helpers
 // ────────────────────────────────────────────────
 
-/** Check whether *any* AI provider key is configured. */
+/** Check whether the Gemini API key is configured. */
 export function hasAnyAIKey(): boolean {
-  return !!(OPENAI_API_KEY || GEMINI_API_KEY || OPENROUTER_API_KEY);
-}
-
-/**
- * Return the ordered list of providers that have a key configured.
- * Gemini first (most generous free tier), then OpenRouter, then OpenAI.
- */
-function availableProviders(): ProviderName[] {
-  const list: ProviderName[] = [];
-  if (GEMINI_API_KEY) list.push("gemini");
-  if (OPENROUTER_API_KEY) list.push("openrouter");
-  if (OPENAI_API_KEY) list.push("openai");
-  return list;
+  return !!GEMINI_API_KEY;
 }
 
 function getHttpStatus(err: unknown): number | undefined {
@@ -81,33 +61,8 @@ async function sleep(ms: number) {
 }
 
 // ────────────────────────────────────────────────
-// Provider adapters
+// Gemini adapter
 // ────────────────────────────────────────────────
-
-async function openaiCompletion(opts: CompletionOptions): Promise<string> {
-  const body: Record<string, unknown> = {
-    model: "gpt-4o-mini",
-    messages: opts.messages,
-    temperature: opts.temperature ?? 0.3,
-    max_tokens: opts.maxTokens ?? 1000,
-  };
-  if (opts.jsonMode) {
-    body.response_format = { type: "json_object" };
-  }
-
-  const res = await axios.post(
-    "https://api.openai.com/v1/chat/completions",
-    body,
-    {
-      headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  return res.data.choices[0].message.content ?? "";
-}
 
 /**
  * Google Gemini REST API adapter.
@@ -161,7 +116,7 @@ async function geminiCompletion(opts: CompletionOptions): Promise<string> {
   }
 
   // Try multiple model versions for robustness (latest first)
-  const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-2.5-pro"];
+  const models = ["gemini-2.0-flash", "gemini-2.5-flash", "gemini-1.5-flash"];
   let lastErr: unknown;
 
   for (const model of models) {
@@ -179,8 +134,7 @@ async function geminiCompletion(opts: CompletionOptions): Promise<string> {
     } catch (err) {
       lastErr = err;
       const status = getHttpStatus(err);
-      // 404 = model doesn't exist → try next model
-      // 429 = rate limited → don't try another model, bubble up
+      // 429 = rate limited → bubble up so caller can retry after delay
       if (status === 429) throw err;
       console.warn(`⚠️ Gemini model ${model} failed (${status}), trying next`);
     }
@@ -189,197 +143,55 @@ async function geminiCompletion(opts: CompletionOptions): Promise<string> {
   throw lastErr;
 }
 
-/**
- * OpenRouter adapter.
- *
- * Tries multiple free models. Does NOT use response_format
- * because most free models don't support structured output —
- * instead we reinforce "respond with JSON only" in the messages.
- */
-async function openrouterCompletion(opts: CompletionOptions): Promise<string> {
-  // Models to try — confirmed working on OpenRouter free tier
-  const models = [
-    import.meta.env.VITE_OPENROUTER_MODEL, // User override (if set)
-    "google/gemma-3-4b-it:free",           // Confirmed working
-    "mistralai/mistral-small-3.1-24b-instruct:free", // Exists (may be rate limited)
-  ].filter(Boolean) as string[];
-
-  // Many free models on OpenRouter don't support the "system" role.
-  // Merge system messages into the first user message to be safe.
-  let messages: ChatMessage[] = [];
-  const systemParts: string[] = [];
-
-  for (const m of opts.messages) {
-    if (m.role === "system") {
-      systemParts.push(m.content);
-    } else {
-      messages.push(m);
-    }
-  }
-
-  if (opts.jsonMode) {
-    systemParts.push(
-      "IMPORTANT: You MUST respond with ONLY valid JSON. No markdown, no explanation, no code fences — pure JSON only."
-    );
-  }
-
-  // Prepend system context to first user message
-  if (systemParts.length > 0 && messages.length > 0) {
-    const firstUserIdx = messages.findIndex((m) => m.role === "user");
-    if (firstUserIdx >= 0) {
-      messages = messages.map((m, i) =>
-        i === firstUserIdx
-          ? {
-              ...m,
-              content:
-                "[Instructions]\n" +
-                systemParts.join("\n") +
-                "\n[/Instructions]\n\n" +
-                m.content,
-            }
-          : m
-      );
-    } else {
-      // No user message yet — prepend one with system context
-      messages.unshift({
-        role: "user",
-        content: systemParts.join("\n"),
-      });
-    }
-  }
-
-  let lastErr: unknown;
-
-  for (const model of models) {
-    try {
-      const body: Record<string, unknown> = {
-        model,
-        messages,
-        temperature: opts.temperature ?? 0.3,
-        max_tokens: opts.maxTokens ?? 1000,
-      };
-
-      const res = await axios.post(
-        "https://openrouter.ai/api/v1/chat/completions",
-        body,
-        {
-          headers: {
-            Authorization: `Bearer ${OPENROUTER_API_KEY}`,
-            "Content-Type": "application/json",
-            "HTTP-Referer":
-              typeof window !== "undefined"
-                ? window.location.origin
-                : "https://saferentai.app",
-            "X-Title": "SafeRent AI",
-          },
-        }
-      );
-
-      const content = res.data?.choices?.[0]?.message?.content ?? "";
-      if (!content) throw new Error("OpenRouter returned empty response");
-
-      // Strip markdown code fences if model wrapped JSON in them
-      const cleaned = content
-        .replace(/^```(?:json)?\s*/i, "")
-        .replace(/\s*```\s*$/i, "")
-        .trim();
-      return cleaned;
-    } catch (err) {
-      lastErr = err;
-      const status = getHttpStatus(err);
-      if (status === 429) throw err; // Rate limit → bubble up
-      console.warn(
-        `⚠️ OpenRouter model ${model} failed (${status}), trying next`
-      );
-    }
-  }
-
-  throw lastErr;
-}
-
-// ────────────────────────────────────────────────
-// Dispatch map
-// ────────────────────────────────────────────────
-
-const providerFn: Record<
-  ProviderName,
-  (opts: CompletionOptions) => Promise<string>
-> = {
-  openai: openaiCompletion,
-  gemini: geminiCompletion,
-  openrouter: openrouterCompletion,
-};
-
 // ────────────────────────────────────────────────
 // Main entry point
 // ────────────────────────────────────────────────
 
 /**
- * Send a chat completion request.
+ * Send a chat completion request via Gemini.
  *
- * Tries each configured provider in order (Gemini → OpenRouter → OpenAI).
- * Within each provider, retries once on a 429 after a delay before
- * falling back to the next provider. ALL other errors fall through
- * immediately to the next provider.
+ * Retries once on a 429 after a delay before giving up.
  */
 export async function chatCompletion(
   opts: CompletionOptions
 ): Promise<CompletionResult> {
-  const providers = availableProviders();
-  if (providers.length === 0) {
+  if (!GEMINI_API_KEY) {
     throw new Error(
-      "No AI API keys configured. Add at least one of VITE_GEMINI_API_KEY, VITE_OPENROUTER_API_KEY, or VITE_OPENAI_API_KEY to your .env file."
+      "No AI API key configured. Add VITE_GEMINI_API_KEY to your .env file. Get a free key at https://aistudio.google.com/apikey"
     );
   }
 
-  const errors: Array<{ provider: ProviderName; error: string }> = [];
+  let lastErr: unknown;
 
-  for (const provider of providers) {
-    const fn = providerFn[provider];
-
-    // Up to 2 attempts per provider (initial + one retry on 429)
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        if (attempt > 0) {
-          // Gemini says "retry in ~9s", OpenAI free tier needs longer
-          const waitMs =
-            provider === "openai" ? 15_000 : provider === "gemini" ? 12_000 : 6_000;
-          console.log(
-            `⏳ ${provider} rate-limited — retrying in ${waitMs / 1000}s`
-          );
-          await sleep(waitMs);
-        }
-
-        console.log(
-          `🤖 AI request → ${provider}${attempt > 0 ? " (retry)" : ""}`
-        );
-        const content = await fn(opts);
-        return { content, provider };
-      } catch (err: unknown) {
-        const status = getHttpStatus(err);
-        const msg = err instanceof Error ? err.message : String(err);
-        console.warn(
-          `⚠️ ${provider} failed (HTTP ${status ?? "?"}, attempt ${attempt + 1}):`,
-          msg
-        );
-
-        errors.push({ provider, error: `${status ?? "?"}: ${msg}` });
-
-        if (status === 429 && attempt === 0) {
-          // Will retry once on this provider
-          continue;
-        }
-        // ANY other error (or second 429) → move to next provider
-        break;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    try {
+      if (attempt > 0) {
+        const waitMs = 12_000;
+        console.log(`⏳ Gemini rate-limited — retrying in ${waitMs / 1000}s`);
+        await sleep(waitMs);
       }
+
+      console.log(`🤖 AI request → gemini${attempt > 0 ? " (retry)" : ""}`);
+      const content = await geminiCompletion(opts);
+      return { content, provider: "gemini" };
+    } catch (err: unknown) {
+      lastErr = err;
+      const status = getHttpStatus(err);
+      const msg = err instanceof Error ? err.message : String(err);
+      console.warn(
+        `⚠️ Gemini failed (HTTP ${status ?? "?"}, attempt ${attempt + 1}):`,
+        msg
+      );
+
+      // Retry once on 429; bubble up everything else immediately
+      if (status === 429 && attempt === 0) continue;
+      break;
     }
   }
 
-  // All providers exhausted — build a useful error message
-  const summary = errors
-    .map((e) => `${e.provider}: ${e.error}`)
-    .join(" | ");
+  const status = getHttpStatus(lastErr);
+  const msg = lastErr instanceof Error ? lastErr.message : String(lastErr);
   throw new Error(
-    `All AI providers failed. ${summary}. Please wait a minute and try again, or check your API keys.`
+    `Gemini request failed (HTTP ${status ?? "?"}): ${msg}. Please wait a minute and try again, or check your API key.`
   );
 }
